@@ -74,6 +74,14 @@ a:hover { text-decoration: underline; }
   box-shadow: 0 6px 14px rgba(37, 99, 235, 0.18);
 }
 
+.brand__logo {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 6px 14px rgba(2, 6, 23, 0.10);
+}
+
 .nav {
   display: flex;
   align-items: center;
