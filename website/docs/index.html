@@ -51,8 +51,26 @@
       <div class="container docs__layout">
         <aside class="docs__toc" aria-label="目录">
           <div class="toc">
+            <div class="toc__title">指南</div>
+            <a class="toc__link" href="#overview">介绍</a>
             <a class="toc__link" href="#quick-start">Quick Start</a>
             <a class="toc__link" href="#workflow">工作流</a>
+
+            <h3 class="doc-subhead">per-entry 覆盖文件</h3>
+            <p class="muted">
+              推荐 per-entry：每个入口生成独立覆盖文件，避免不同页面间互相污染。
+            </p>
+            <div class="codeblock">
+              <pre><code>/* src/styles/&lt;page&gt;.scss */
+@use "./_responsive-autofill.&lt;page&gt;.generated" as auto;
+
+/* ...你的样式... */
+
+@include auto.responsive_autofill_overrides();</code></pre>
+            </div>
+            <a class="toc__link" href="#structure">项目结构</a>
+
+            <div class="toc__title">参考</div>
             <a class="toc__link" href="#commands">指令大全</a>
             <a class="toc__link" href="#config">配置说明</a>
             <a class="toc__link" href="#faq">FAQ</a>
@@ -60,11 +78,36 @@
         </aside>
 
         <article class="docs__content">
-          <h1>文档</h1>
-          <p class="muted">
-            这里包含 Quick Start、所有常用/高级/隐藏指令（含
-            deprecated），以及最常用的配置项说明。
-          </p>
+          <h1>shopify-scss-autofill</h1>
+          <p class="muted">面向 Shopify Theme Kit 的 SCSS 工具链与文档。</p>
+
+          <section id="overview" class="doc-section">
+            <h2>介绍</h2>
+            <p>
+              目标是把 Theme Kit 的日常样式开发流程变得更稳定：你只需要在
+              <span class="code">src/styles</span> 写 SCSS，其余交给工具链。
+            </p>
+            <ul class="list">
+              <li>
+                写 SCSS：入口与 partial 都在
+                <span class="code">src/styles/</span>
+              </li>
+              <li>
+                安全编译：先输出到
+                <span class="code">src/.sass-out</span>，再同步
+                <span class="code">assets</span>（降低误覆盖风险）
+              </li>
+              <li>
+                移动端覆盖：从
+                <span class="code">r.resp(pc, mobile, type)</span>
+                自动生成 per-entry 覆盖文件
+              </li>
+              <li>
+                上传联动：配合
+                <span class="code">theme watch</span> 做本地开发上传
+              </li>
+            </ul>
+          </section>
 
           <section id="quick-start" class="doc-section">
             <h2>Quick Start</h2>
@@ -116,6 +159,37 @@
                   <span class="code">src/.sass-out</span> 再同步
                   <span class="code">assets</span>，并由 Theme Kit 上传。
                 </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="structure" class="doc-section">
+            <h2>项目结构</h2>
+            <p class="muted">下面是仓库/脚手架中最关键的目录与文件。</p>
+            <div class="table">
+              <div class="row">
+                <div class="cell cmd">src/styles/</div>
+                <div class="cell">SCSS 源码（入口 + partial）</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">assets/</div>
+                <div class="cell">编译产物（Theme Kit watch 上传的目标）</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">tools/scss-kit/</div>
+                <div class="cell">
+                  内置 CLI + watchers（生成/排查/编译链路）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">scss-kit.config.json</div>
+                <div class="cell">扫描目录、entries、阈值等配置</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">config.yml</div>
+                <div class="cell">
+                  Theme Kit 连接配置（password/theme_id/store）
+                </div>
               </div>
             </div>
           </section>
