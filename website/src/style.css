@@ -405,7 +405,7 @@ p { margin: 8px 0 0; }
 
 .toc__title {
   margin: 10px 0 4px;
-  font-size: 12px;
+  font-size: 16px;
   font-weight: 700;
   letter-spacing: 0.2px;
   color: rgba(15, 23, 42, 0.58);
@@ -416,6 +416,7 @@ p { margin: 8px 0 0; }
 .toc__link {
   padding: 8px 10px;
   border-radius: 10px;
+  font-size: 14px;
   color: var(--muted);
   border: 1px solid transparent;
 }
