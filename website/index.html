@@ -41,7 +41,7 @@
       <section class="hero">
         <div class="container">
           <div class="hero__layout">
-            <div>
+            <div class="hero__content">
               <div class="hero__kicker">
                 <span class="dot" aria-hidden="true"></span>渐进式 Shopify SCSS
                 工作流
@@ -55,21 +55,295 @@
                 上传”体验。
               </p>
 
-              <div class="grid hero__features" aria-label="Key features">
-                <div class="card">
-                  <p>PC 端埋点，自动生成移动端覆盖（避免跨页面污染）</p>
-                </div>
-                <div class="card">
-                  <p>safe mode 编译：默认不覆盖未知历史 assets</p>
-                </div>
-                <div class="card">
-                  <p>一条命令启动：生成 + 编译 + theme watch</p>
-                </div>
-              </div>
-
               <div class="hero__cta">
                 <a class="btn" href="./docs/#quick-start">Quick Start</a>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="grid">
+            <div class="card">
+              <div class="card__head">
+                <svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 6.5a2.5 2.5 0 0 1 2.5-2.5h11A2.5 2.5 0 0 1 20 6.5v7A2.5 2.5 0 0 1 17.5 16h-11A2.5 2.5 0 0 1 4 13.5v-7Z"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                  />
+                  <path
+                    d="M8 20h8"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M12 16v4"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <h3>PC 埋点 → 移动端样式自动生成</h3>
+              </div>
+              <p>
+                在样式里写
+                <span class="code">r.resp(pc, mobile, type)</span>，工具扫描并生成
+                <span class="code">_responsive-autofill.&lt;entry&gt;.generated.scss</span>。
+              </p>
+            </div>
+
+            <div class="card">
+              <div class="card__head">
+                <svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M12 3l7 4v6c0 5-3 8-7 9-4-1-7-4-7-9V7l7-4Z"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                  />
+                  <path
+                    d="M9.3 12l1.8 1.8L15.8 9"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <h3>安全编译（safe mode）</h3>
+              </div>
+              <p>
+                Sass 先输出到 <span class="code">src/.sass-out/</span>，再同步到
+                <span class="code">assets/</span>。默认不会覆盖未知历史 CSS。
+              </p>
+            </div>
+
+            <div class="card">
+              <div class="card__head">
+                <svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M7 7h10v10H7V7Z"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                  />
+                  <path
+                    d="M4 10V6a2 2 0 0 1 2-2h4"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M20 14v4a2 2 0 0 1-2 2h-4"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M10 12h4"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M12 10v4"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                </svg>
+                <h3>Theme Kit 一键联动</h3>
+              </div>
+              <p>
+                通过 <span class="code">npm run dev:theme:auto</span> 同时跑生成器 +
+                编译 + <span class="code">theme watch</span>，改完刷新即见。
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--alt">
+        <div class="container">
+          <div class="split">
+            <div class="card">
+              <div class="card__head">
+                <svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M16 5h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M10 9l-2 3 2 3"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M14 9l2 3-2 3"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <h3>你写的 SCSS</h3>
+              </div>
+              <div class="codeblock codeblock--terminal" role="region" aria-label="SCSS example">
+                <pre><code>.product-card {
+  padding: 24px;
+
+  &__title {
+    font-size: r.resp(40px, 20px, h1);
+    line-height: r.resp(48px, 26px, body);
+  }
+
+  .price {
+    margin-top: r.resp(24px, 12px, body);
+  }
+
+  &:hover {
+    &__title {
+      letter-spacing: r.resp(0.6px, 0.2px, body);
+    }
+  }
+}</code></pre>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card__head">
+                <svg
+                  class="icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 7h8"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M8 12h8"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M8 17h6"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                  />
+                  <path
+                    d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9l-3 2v-2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <h3>生成的覆盖（示意）</h3>
+              </div>
+              <div class="codeblock codeblock--terminal" role="region" aria-label="Generated example">
+                <pre><code>/* Generated by scss-kit */
+
+/* PC（r.resp 转换后，示意） */
+.product-card__title {
+  font-size: r.clamp_pc(40px, r.min_px(40px, h1, desktop));
+  line-height: r.clamp_pc(48px, r.min_px(48px, body, desktop));
+}
+
+.product-card .price {
+  margin-top: r.clamp_pc(24px, r.min_px(24px, body, desktop));
+}
+
+.product-card:hover .product-card__title {
+  letter-spacing: r.clamp_pc(0.6px, r.min_px(0.6px, body, desktop));
+}
+
+/* Mobile overrides（autofill） */
+@media (max-width: 850px) {
+  .product-card__title {
+    font-size: r.clamp_mb(20px, r.min_px(20px, h1, mobile));
+    line-height: r.clamp_mb(26px, r.min_px(26px, body, mobile));
+  }
+
+  .product-card .price {
+    margin-top: r.clamp_mb(12px, r.min_px(12px, body, mobile));
+  }
+
+  .product-card:hover .product-card__title {
+    letter-spacing: r.clamp_mb(0.2px, r.min_px(0.2px, body, mobile));
+  }
+}</code></pre>
+              </div>
+            </div>
+          </div>
+          <p class="muted">
+            完整说明见
+            <a class="link" href="./docs/#commands">文档 · 指令大全</a>。
+          </p>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <div class="grid">
+            <div class="card">
+              <h3>开箱即用</h3>
+              <p>
+                通过
+                <span class="code">npm create</span> 一步接入工具链与默认配置。
+              </p>
+            </div>
+            <div class="card">
+              <h3>一键启动</h3>
+              <p>一个命令同时跑生成器、编译与 Theme Kit 上传。</p>
+            </div>
+            <div class="card">
+              <h3>可配置</h3>
+              <p>
+                用
+                <span class="code">scss-kit.config.json</span>
+                自定义扫描目录、入口与阈值。
+              </p>
             </div>
           </div>
         </div>
