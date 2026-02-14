@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "scss-kit config",
+  "type": "object",
+  "required": ["design", "paths", "themeKit", "coefficients"],
+  "properties": {
+    "design": {
+      "type": "object",
+      "required": ["desktopWidth", "mobileWidth"],
+      "properties": {
+        "desktopWidth": {"type": "integer", "minimum": 320},
+        "mobileWidth": {"type": "integer", "minimum": 320},
+        "note": {"type": "string"}
+      }
+    },
+    "paths": {
+      "type": "object",
+      "required": ["scssSrcDir", "cssOutDir"],
+      "properties": {
+        "scssSrcDir": {"type": "string"},
+        "cssOutDir": {"type": "string"}
+      }
+    },
+    "autofill": {
+      "type": "object",
+      "properties": {
+        "function": {"type": "string"},
+        "mobileMax": {"type": "integer", "minimum": 1},
+        "scanDirs": {"type": "array", "items": {"type": "string"}},
+        "output": {"type": "string"},
+        "entries": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "themeKit": {
+      "type": "object",
+      "required": ["env", "configYml", "ignoreFiles"],
+      "properties": {
+        "env": {"type": "string"},
+        "configYml": {"type": "string"},
+        "ignoreFiles": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "coefficients": {
+      "type": "object",
+      "required": ["mobile", "desktop"],
+      "properties": {
+        "mobile": {"type": "object", "additionalProperties": {"type": "number"}},
+        "desktop": {"type": "object", "additionalProperties": {"type": "number"}}
+      }
+    }
+  }
+}

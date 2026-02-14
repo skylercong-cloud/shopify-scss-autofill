@@ -1,0 +1,34 @@
+{
+  "name": "create-shopify-scss-autofill",
+  "version": "0.1.0",
+  "description": "Scaffold scss-kit (SCSS workflow + responsive autofill) for Shopify theme development.",
+  "keywords": [
+    "shopify",
+    "themekit",
+    "scss",
+    "sass",
+    "vite",
+    "scaffold",
+    "cli"
+  ],
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "create-shopify-scss-autofill": "./bin/create-scss-kit.mjs",
+    "create-scss-kit": "./bin/create-scss-kit.mjs"
+  },
+  "scripts": {
+    "sync-template": "node ./scripts/sync-template.mjs",
+    "prepack": "npm run sync-template"
+  },
+  "files": [
+    "bin/",
+    "scripts/",
+    "template/",
+    "README.md",
+    "package.json"
+  ]
+}

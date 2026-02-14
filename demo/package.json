@@ -1,0 +1,25 @@
+{
+  "name": "demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "scss-kit:init": "node tools/scss-kit/cli.mjs init",
+    "scss-kit:generate": "node tools/scss-kit/cli.mjs generate",
+    "scss-kit:doctor": "node tools/scss-kit/cli.mjs doctor",
+    "scss-kit:responsive:generate": "node tools/scss-kit/cli.mjs responsive:generate",
+    "scss-kit:responsive:generate:entries": "node tools/scss-kit/cli.mjs responsive:generate:entries",
+    "theme:watch": "theme watch --env=development",
+    "css:watch": "node tools/scss-kit/css-watch-safe.mjs",
+    "responsive:watch": "chokidar \"src/styles/**/*.scss\" -i \"src/styles/_responsive-autofill*.generated.scss\" -c \"node tools/scss-kit/responsive-watch.mjs {path}\"",
+    "dev:theme": "concurrently -k -n CSS,THEME \"npm:css:watch\" \"npm:theme:watch\"",
+    "dev:theme:auto": "concurrently -k -n AUTO,CSS,THEME \"npm:responsive:watch\" \"npm:css:watch\" \"npm:theme:watch\""
+  },
+  "devDependencies": {
+    "chokidar-cli": "^3.0.0",
+    "concurrently": "^9.2.0",
+    "postcss": "^8.5.6",
+    "postcss-scss": "^4.0.9",
+    "sass": "^1.92.1"
+  }
+}

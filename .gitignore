@@ -1,0 +1,15 @@
+.DS_Store
+node_modules/
+
+# demo build artifacts
+src/.sass-out/
+
+# scss-kit generated suggestions
+scss-kit/patches/
+scss-kit/_tmp-*/
+
+# npm pack artifacts
+*.tgz
+
+# Optional local-only files
+shopify.theme.toml
