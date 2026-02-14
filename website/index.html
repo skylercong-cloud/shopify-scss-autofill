@@ -43,14 +43,18 @@
           <div class="hero__layout">
             <div>
               <div class="hero__kicker">
-                <span class="dot" aria-hidden="true"></span>面向 Shopify Theme
-                Kit 的 SCSS 工具链
+                <span class="dot" aria-hidden="true"></span>渐进式 Shopify SCSS
+                工作流
               </div>
-              <h1 class="hero__title">让 Shopify 页面开发的 SCSS 体验更顺滑</h1>
+              <h1 class="hero__title">面向 Shopify Theme Kit 的 SCSS 工具链</h1>
               <p class="hero__subtitle">
-                安全编译 CSS + 一键联动 Theme Kit，并通过
-                <span class="code">r.resp(pc, mobile, type)</span>
-                自动生成 per-entry 移动端覆盖。
+                易上手、稳定、可扩展：为日常页面开发提供更顺滑的“写样式 → 编译 →
+                上传”体验。
+              </p>
+              <p class="hero__subtitle">
+                核心能力：安全编译 CSS +
+                <span class="code">r.resp(pc, mobile, type)</span> 自动生成
+                per-entry 移动端覆盖。
               </p>
 
               <ul class="hero__bullets">
@@ -418,7 +422,11 @@ npm run dev:theme:auto</code></pre>
                 </svg>
                 <h3>你写的 SCSS</h3>
               </div>
-              <div class="codeblock" role="region" aria-label="SCSS example">
+              <div
+                class="codeblock codeblock--terminal"
+                role="region"
+                aria-label="SCSS example"
+              >
                 <pre><code>.product-card {
   padding: 24px;
 
@@ -477,7 +485,7 @@ npm run dev:theme:auto</code></pre>
                 <h3>生成的覆盖（示意）</h3>
               </div>
               <div
-                class="codeblock"
+                class="codeblock codeblock--terminal"
                 role="region"
                 aria-label="Generated example"
               >
