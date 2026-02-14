@@ -54,6 +54,7 @@
             <div class="toc__title">指南</div>
             <a class="toc__link" href="#overview">介绍</a>
             <a class="toc__link" href="#quick-start">Quick Start</a>
+            <a class="toc__link" href="#scss-dev">基于 SCSS 的开发体验</a>
             <a class="toc__link" href="#workflow">工作流</a>
             <a class="toc__link" href="#per-entry">per-entry 覆盖</a>
             <a class="toc__link" href="#override-order">覆盖顺序</a>
@@ -61,7 +62,6 @@
 
             <div class="toc__title">原理</div>
             <a class="toc__link" href="#safety">安全策略</a>
-            <a class="toc__link" href="#scss-dev">基于 SCSS 的开发体验</a>
             <a class="toc__link" href="#mobile-min">最小值规则</a>
 
             <div class="toc__title">参考</div>
@@ -128,6 +128,35 @@
                 </div>
               </li>
             </ol>
+          </section>
+
+          <section id="scss-dev" class="doc-section">
+            <h2>基于 SCSS 的开发体验</h2>
+            <p class="muted">
+              Theme Kit 本质上传的是 CSS，但日常维护更适合写
+              SCSS：可读、可组织、可复用。
+            </p>
+
+            <h3 class="doc-subhead">你写的是 SCSS</h3>
+            <ul class="list">
+              <li>
+                入口与 partial 统一放在
+                <span class="code">src/styles/</span>，用
+                <span class="code">@use</span> 做模块化。
+              </li>
+              <li>
+                支持嵌套、变量、函数与拆分文件，让样式更贴近组件结构，减少重复与“复制粘贴改数字”。
+              </li>
+            </ul>
+
+            <h3 class="doc-subhead">工具链帮你把“响应式 + 覆盖”做成稳定机制</h3>
+            <p>
+              你在 SCSS 里写
+              <span class="code">r.resp(pc, mobile, type)</span>
+              来表达“同一语义的 PC / Mobile 值”。
+              工具会扫描这些调用并为每个入口生成移动端覆盖（per-entry），而最终上传到
+              Shopify 的始终是普通 CSS。
+            </p>
           </section>
 
           <section id="workflow" class="doc-section">
@@ -268,35 +297,6 @@
             <p>
               生成/初始化阶段如果检测到“无法确认是否为工具产物/无法安全合并”，不会强行改动原文件，而是写出
               <span class="code">*.new</span> 让你手动比对合并。
-            </p>
-          </section>
-
-          <section id="scss-dev" class="doc-section">
-            <h2>基于 SCSS 的开发体验</h2>
-            <p class="muted">
-              Theme Kit 本质上传的是 CSS，但日常维护更适合写
-              SCSS：可读、可组织、可复用。
-            </p>
-
-            <h3 class="doc-subhead">你写的是 SCSS</h3>
-            <ul class="list">
-              <li>
-                入口与 partial 统一放在
-                <span class="code">src/styles/</span>，用
-                <span class="code">@use</span> 做模块化。
-              </li>
-              <li>
-                支持嵌套、变量、函数与拆分文件，让样式更贴近组件结构，减少重复与“复制粘贴改数字”。
-              </li>
-            </ul>
-
-            <h3 class="doc-subhead">工具链帮你把“响应式 + 覆盖”做成稳定机制</h3>
-            <p>
-              你在 SCSS 里写
-              <span class="code">r.resp(pc, mobile, type)</span>
-              来表达“同一语义的 PC / Mobile 值”。
-              工具会扫描这些调用并为每个入口生成移动端覆盖（per-entry），而最终上传到
-              Shopify 的始终是普通 CSS。
             </p>
           </section>
 
