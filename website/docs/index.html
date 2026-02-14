@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>shopify-scss-autofill · 文档</title>
+    <meta
+      name="description"
+      content="shopify-scss-autofill 文档：Quick Start、指令说明、配置说明。"
+    />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="../">shopify-scss-autofill</a>
+        <nav class="nav">
+          <a class="nav__link" href="../">首页</a>
+          <a class="nav__link is-active" href="./">文档</a>
+          <a
+            class="nav__link"
+            href="https://github.com/skylercong-cloud/shopify-scss-autofill"
+            target="_blank"
+            rel="noreferrer"
+            >GitHub</a
+          >
+          <a
+            class="nav__link"
+            href="https://www.npmjs.com/package/create-shopify-scss-autofill"
+            target="_blank"
+            rel="noreferrer"
+            >npm</a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <main class="docs">
+      <div class="container docs__layout">
+        <aside class="docs__toc" aria-label="目录">
+          <div class="toc">
+            <a class="toc__link" href="#quick-start">Quick Start</a>
+            <a class="toc__link" href="#workflow">工作流</a>
+            <a class="toc__link" href="#commands">指令大全</a>
+            <a class="toc__link" href="#config">配置说明</a>
+            <a class="toc__link" href="#faq">FAQ</a>
+          </div>
+        </aside>
+
+        <article class="docs__content">
+          <h1>文档</h1>
+          <p class="muted">
+            这里包含 Quick Start、所有常用/高级/隐藏指令（含
+            deprecated），以及最常用的配置项说明。
+          </p>
+
+          <section id="quick-start" class="doc-section">
+            <h2>Quick Start</h2>
+            <ol class="list">
+              <li>
+                安装/准备：Node.js ≥ 18；本地安装 Shopify Theme Kit（可执行
+                <span class="code">theme</span> 命令）。
+              </li>
+              <li>
+                创建工程：
+                <div class="codeblock">
+                  <pre><code>npm create shopify-scss-autofill@latest</code></pre>
+                </div>
+              </li>
+              <li>
+                填写 <span class="code">config.yml</span>（Theme Kit 的
+                <span class="code">password/theme_id/store</span>）。
+              </li>
+              <li>
+                一键启动：
+                <div class="codeblock">
+                  <pre><code>npm run dev:theme:auto</code></pre>
+                </div>
+              </li>
+            </ol>
+          </section>
+
+          <section id="workflow" class="doc-section">
+            <h2>工作流</h2>
+            <div class="grid">
+              <div class="card">
+                <h3>写 SCSS</h3>
+                <p>
+                  在 <span class="code">src/styles/</span> 写入口文件与局部
+                  partial。
+                </p>
+              </div>
+              <div class="card">
+                <h3>生成移动端覆盖</h3>
+                <p>
+                  扫描 <span class="code">r.resp(pc, mobile, type)</span>，生成
+                  per-entry 覆盖文件。
+                </p>
+              </div>
+              <div class="card">
+                <h3>安全编译 + 上传</h3>
+                <p>
+                  safe watch 输出到
+                  <span class="code">src/.sass-out</span> 再同步
+                  <span class="code">assets</span>，并由 Theme Kit 上传。
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section id="commands" class="doc-section">
+            <h2>指令大全</h2>
+
+            <h3>推荐日常指令（npm scripts）</h3>
+            <div class="table">
+              <div class="row">
+                <div class="cell cmd">npm run dev:theme:auto</div>
+                <div class="cell">
+                  responsive 生成 + safe CSS 编译 + Theme Kit watch
+                  上传（开发首选）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">npm run dev:theme</div>
+                <div class="cell">
+                  仅 safe CSS 编译 + Theme Kit watch（不跑生成器）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">npm run responsive:watch</div>
+                <div class="cell">监听 SCSS 变更，触发 per-entry 覆盖生成</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">npm run scss-kit:init</div>
+                <div class="cell">
+                  初始化（生成 <span class="code">_responsive.scss</span>、占位
+                  autofill 文件、补齐 scripts/devDeps、处理
+                  <span class="code">config.yml</span>）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">npm run scss-kit:doctor</div>
+                <div class="cell">健康检查（用来确认接入是否完整）</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">npm run scss-kit:generate</div>
+                <div class="cell">
+                  仅生成/更新
+                  <span class="code">src/styles/_responsive.scss</span>
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">npm run scss-kit:responsive:generate</div>
+                <div class="cell">
+                  生成响应式覆盖（shared 模式或按配置扫描）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">
+                  npm run scss-kit:responsive:generate:entries
+                </div>
+                <div class="cell">
+                  按 <span class="code">autofill.entries</span> 批量生成
+                  per-entry 覆盖文件（推荐）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">npm run css:watch</div>
+                <div class="cell">
+                  safe mode 编译：<span class="code">src/styles</span> →
+                  <span class="code">assets</span>
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">npm run theme:watch</div>
+                <div class="cell">
+                  Theme Kit 上传：<span class="code"
+                    >theme watch --env=development</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <h3>scss-kit CLI（工具指令）</h3>
+            <p class="muted">
+              这些指令来自
+              <span class="code">tools/scss-kit/cli.mjs</span
+              >，适合初始化、排查与生成。
+            </p>
+            <div class="table">
+              <div class="row">
+                <div class="cell cmd">node tools/scss-kit/cli.mjs init</div>
+                <div class="cell">
+                  初始化：生成
+                  <span class="code">_responsive.scss</span
+                  >、确保占位生成文件存在、尝试补齐 scripts/devDeps、生成占位
+                  <span class="code">config.yml</span>
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">node tools/scss-kit/cli.mjs generate</div>
+                <div class="cell">
+                  仅生成/更新
+                  <span class="code">src/styles/_responsive.scss</span
+                  >（安全写入）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">node tools/scss-kit/cli.mjs doctor</div>
+                <div class="cell">
+                  健康检查：关键文件/配置是否齐全（exit code 表示是否 ok）
+                </div>
+              </div>
+            </div>
+
+            <h3>响应式/覆盖生成（含高级/隐藏用法）</h3>
+            <div class="table">
+              <div class="row">
+                <div class="cell cmd">
+                  node tools/scss-kit/cli.mjs responsive:generate
+                </div>
+                <div class="cell">
+                  扫描配置的目录，生成单个 shared 输出（如果你的配置使用 shared
+                  模式）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">
+                  node tools/scss-kit/cli.mjs responsive:generate
+                  &lt;entry.scss&gt;
+                </div>
+                <div class="cell">
+                  （高级）只为一个入口生成 per-entry 覆盖输出（输出路径可选）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">
+                  node tools/scss-kit/cli.mjs responsive:generate
+                  &lt;entry.scss&gt; &lt;out.scss&gt;
+                </div>
+                <div class="cell">（高级）指定输出文件路径</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">
+                  node tools/scss-kit/cli.mjs responsive:generate:entries
+                </div>
+                <div class="cell">
+                  （推荐）根据 <span class="code">scss-kit.config.json</span> 的
+                  <span class="code">autofill.entries</span> 批量为每个入口生成
+                  <span class="code"
+                    >_responsive-autofill.&lt;entry&gt;.generated.scss</span
+                  >
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">
+                  node tools/scss-kit/cli.mjs responsive:extract
+                  &lt;file.scss&gt;
+                </div>
+                <div class="cell">
+                  （隐藏）从指定文件提取 px 候选，输出到
+                  <span class="code">scss-kit/responsive-extract.json</span>
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">
+                  node tools/scss-kit/cli.mjs responsive:template
+                </div>
+                <div class="cell">
+                  （deprecated）旧的 map 模式已移除；该命令会返回错误提示
+                </div>
+              </div>
+            </div>
+
+            <h3>手动兜底（不建议）</h3>
+            <div class="codeblock">
+              <pre><code>sass --watch src/styles:assets --style=expanded --no-source-map</code></pre>
+            </div>
+            <p class="muted">
+              说明：这会直接覆盖 assets 同名文件，可能误伤历史资源；日常建议使用
+              <span class="code">npm run css:watch</span>（safe mode）。
+            </p>
+          </section>
+
+          <section id="config" class="doc-section">
+            <h2>配置说明（scss-kit.config.json）</h2>
+            <p class="muted">这里列出最常用的字段，满足大多数项目接入。</p>
+
+            <div class="table">
+              <div class="row">
+                <div class="cell cmd">paths.scssSrcDir</div>
+                <div class="cell">
+                  SCSS 源目录（默认 <span class="code">src/styles</span>）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">autofill.function</div>
+                <div class="cell">
+                  埋点函数名（默认 <span class="code">r.resp</span>）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">autofill.scanDirs</div>
+                <div class="cell">
+                  扫描目录列表（默认扫描 <span class="code">src/styles</span>）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">autofill.mobileMax</div>
+                <div class="cell">移动端最大宽度阈值（默认 850）</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">autofill.entries</div>
+                <div class="cell">入口列表（per-entry 模式批量生成所需）</div>
+              </div>
+            </div>
+          </section>
+
+          <section id="faq" class="doc-section">
+            <h2>FAQ</h2>
+            <h3>生成器为什么会产出 <span class="code">*.new</span> 文件？</h3>
+            <p>
+              这是安全写入策略：当检测到文件不是由工具生成（没有
+              marker）时，不会直接覆盖，而是写出
+              <span class="code">.new</span> 供你手动合并。
+            </p>
+
+            <h3>为什么强调 per-entry？</h3>
+            <p>
+              per-entry 会为每个入口生成独立覆盖文件，避免 shared generated
+              在不同页面之间互相污染。
+            </p>
+          </section>
+        </article>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <span>MIT License</span>
+        <span class="footer__sep">·</span>
+        <a
+          href="https://github.com/skylercong-cloud/shopify-scss-autofill"
+          target="_blank"
+          rel="noreferrer"
+          >GitHub</a
+        >
+      </div>
+    </footer>
+
+    <script type="module" src="/src/docs.js"></script>
+  </body>
+</html>

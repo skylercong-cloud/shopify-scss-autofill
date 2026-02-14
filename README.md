@@ -36,6 +36,20 @@ npm run dev:theme:auto
 - `tools/create-scss-kit/`: npm initializer package (published as `create-shopify-scss-autofill`)
 - `demo/`: example project generated from the initializer
 
+## Website
+
+This repo includes a minimal website under `website/`.
+
+- Local dev:
+
+```bash
+cd website
+npm install
+npm run dev
+```
+
+- GitHub Pages (project site): `https://skylercong-cloud.github.io/shopify-scss-autofill/`
+
 ## Development
 
 Prereqs: Node.js >= 18.
