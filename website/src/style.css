@@ -325,6 +325,13 @@ p { margin: 8px 0 0; }
   margin-bottom: 6px;
 }
 
+.card__desc {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .icon {
   width: 18px;
   height: 18px;
