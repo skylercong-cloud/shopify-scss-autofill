@@ -185,8 +185,9 @@ function replaceRespCalls(value, { ns, name }) {
     const args = splitTopLevelArgs(argsStr)
     if (args.length >= 3) {
       const mobile = args[1]
-      const type = args[2]
-      out += `${ns}.clamp_mb(${mobile}, ${ns}.min_px(${mobile}, ${type}, mobile))`
+      const desktopType = args[2]
+      const mobileType = args.length >= 4 ? args[3] : desktopType
+      out += `${ns}.clamp_mb(${mobile}, ${ns}.min_px(${mobile}, ${mobileType}, mobile))`
       changed = true
     } else {
       // Not enough args: keep original call.
@@ -307,7 +308,7 @@ function scanScssForAutofill_ast(absFilePath, { ns, name }) {
   }
 
   const raw = fs.readFileSync(absFilePath, 'utf8')
-  const root = postcss.parse(raw, { syntax: scssSyntax, from: absFilePath })
+  const root = scssSyntax.parse(raw, { from: absFilePath })
 
   /** @type {{ selector: string, property: string, value: string, order: number }[]} */
   const rules = []
@@ -381,6 +382,8 @@ function getAutofillEntries(cfg) {
 
 function generateAutofillScss(cfg, collectedRules) {
   const { ns, mobileMax } = getAutofill(cfg)
+  const desktopWidth = cfg?.design?.desktopWidth ?? 1920
+  const mobileWidth = cfg?.design?.mobileWidth ?? 750
 
   const header = `@use "./responsive" as ${ns};
 
@@ -396,7 +399,8 @@ function generateAutofillScss(cfg, collectedRules) {
     return (
       header +
       mixinHeader +
-      `  @media screen and (max-width: ${mobileMax}px) {\n  }\n` +
+      `  :root {\n    --px-to-vw: calc(100vw / ${desktopWidth});\n  }\n\n` +
+      `  @media screen and (max-width: ${mobileMax}px) {\n    :root {\n      --px-to-vw-mb: calc(100vw / ${mobileWidth});\n    }\n  }\n` +
       mixinFooter
     )
   }
@@ -417,10 +421,21 @@ function generateAutofillScss(cfg, collectedRules) {
     blocks.push(`${selector} {\n${lines.join('\n')}\n}`)
   }
 
+  const scopedMobileVarBlocks = []
+  for (const selector of selectorMap.keys()) {
+    scopedMobileVarBlocks.push(
+      `${selector} {\n  --px-to-vw-mb: calc(100vw / ${mobileWidth});\n}`
+    )
+  }
+
   return (
     header +
     mixinHeader +
+    `  :root {\n    --px-to-vw: calc(100vw / ${desktopWidth});\n  }\n\n` +
     `  @media screen and (max-width: ${mobileMax}px) {\n` +
+    `    :root {\n      --px-to-vw-mb: calc(100vw / ${mobileWidth});\n    }\n\n` +
+    scopedMobileVarBlocks.map((b) => b.replaceAll(/^/gm, '    ')).join('\n\n') +
+    `\n\n` +
     blocks.map((b) => b.replaceAll(/^/gm, '    ')).join('\n\n') +
     `\n  }` +
     mixinFooter
@@ -591,8 +606,11 @@ $coef-desktop: ${desktopMap};
   @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw-mb)), #{$v});
 }
 
-// resp(): write PC with mobile+type embedded (for scss-kit autofill scanning)
-@function resp($pc, $mobile, $type) {
+// resp():
+// - arg3: desktop type
+// - arg4 (optional): mobile type, defaults to desktop type
+// Keep both types in source so scss-kit autofill scanner can emit mobile overrides.
+@function resp($pc, $mobile, $type, $mobile-type: null) {
   @if meta.type-of($pc) != number {
     @error "resp() expects a number (px) for pc value";
   }
@@ -864,7 +882,7 @@ function main() {
           action: 'responsive:template',
           ok: false,
           reason:
-            'deprecated: responsive map mode removed; use r.resp(pc, mobile, type) + responsive:generate',
+            'deprecated: responsive map mode removed; use r.resp(pc, mobile, desktopType[, mobileType]) + responsive:generate',
         },
         null,
         2

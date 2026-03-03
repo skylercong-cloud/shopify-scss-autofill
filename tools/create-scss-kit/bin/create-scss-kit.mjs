@@ -79,7 +79,18 @@ function parseArgs(argv) {
   return out
 }
 
+function makeLowRangeCoefficients() {
+  const out = {}
+  for (let i = 0; i <= 50; i += 5) {
+    const key = `scale-${String(i).padStart(2, '0')}`
+    out[key] = Number((i / 100).toFixed(2))
+  }
+  return out
+}
+
 function makeDefaultConfig() {
+  const lowRange = makeLowRangeCoefficients()
+
   return {
     $schema: './tools/scss-kit/schema.json',
     design: {
@@ -115,6 +126,7 @@ function makeDefaultConfig() {
     },
     coefficients: {
       mobile: {
+        ...lowRange,
         h1: 0.5,
         h2: 0.625,
         h3: 0.75,
@@ -127,6 +139,7 @@ function makeDefaultConfig() {
         icon: 0.67,
       },
       desktop: {
+        ...lowRange,
         h1: 0.625,
         h2: 0.67,
         h3: 0.75,

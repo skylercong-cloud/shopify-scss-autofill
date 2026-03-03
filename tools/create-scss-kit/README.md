@@ -3,7 +3,7 @@
 This package scaffolds **scss-kit** into an existing folder (or a new folder) so you can get a stable workflow:
 
 - write SCSS → compile to CSS (safe mode)
-- auto-generate per-entry responsive overrides from `r.resp(pc, mobile, type)`
+- auto-generate per-entry responsive overrides from `r.resp(pc, mobile, desktopType[, mobileType])`
 - upload via Shopify Theme Kit (`theme watch`)
 
 ## Usage (npm create)

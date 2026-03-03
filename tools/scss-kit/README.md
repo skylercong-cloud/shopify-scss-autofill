@@ -1,6 +1,6 @@
 # scss-kit（本仓库内置工具）
 
-目的：在 Shopify ThemeKit 开发里实现“写 SCSS（src/styles）→ 编译 CSS（assets）→ theme watch 上传”，并提供一套基于 `r.resp(pc, mobile, type)` 的移动端覆盖自动生成能力。
+目的：在 Shopify ThemeKit 开发里实现“写 SCSS（src/styles）→ 编译 CSS（assets）→ theme watch 上传”，并提供一套基于 `r.resp(pc, mobile, desktopType[, mobileType])` 的移动端覆盖自动生成能力。
 
 ## 拷贝接入（新项目）
 

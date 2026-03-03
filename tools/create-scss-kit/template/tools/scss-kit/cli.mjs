@@ -185,8 +185,9 @@ function replaceRespCalls(value, { ns, name }) {
     const args = splitTopLevelArgs(argsStr)
     if (args.length >= 3) {
       const mobile = args[1]
-      const type = args[2]
-      out += `${ns}.clamp_mb(${mobile}, ${ns}.min_px(${mobile}, ${type}, mobile))`
+      const desktopType = args[2]
+      const mobileType = args.length >= 4 ? args[3] : desktopType
+      out += `${ns}.clamp_mb(${mobile}, ${ns}.min_px(${mobile}, ${mobileType}, mobile))`
       changed = true
     } else {
       // Not enough args: keep original call.
@@ -591,8 +592,11 @@ $coef-desktop: ${desktopMap};
   @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw-mb)), #{$v});
 }
 
-// resp(): write PC with mobile+type embedded (for scss-kit autofill scanning)
-@function resp($pc, $mobile, $type) {
+// resp():
+// - arg3: desktop type
+// - arg4 (optional): mobile type, defaults to desktop type
+// Keep both types in source so scss-kit autofill scanner can emit mobile overrides.
+@function resp($pc, $mobile, $type, $mobile-type: null) {
   @if meta.type-of($pc) != number {
     @error "resp() expects a number (px) for pc value";
   }
@@ -864,7 +868,7 @@ function main() {
           action: 'responsive:template',
           ok: false,
           reason:
-            'deprecated: responsive map mode removed; use r.resp(pc, mobile, type) + responsive:generate',
+            'deprecated: responsive map mode removed; use r.resp(pc, mobile, desktopType[, mobileType]) + responsive:generate',
         },
         null,
         2
