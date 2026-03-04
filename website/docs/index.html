@@ -66,6 +66,7 @@
 
             <div class="toc__title">参考</div>
             <a class="toc__link" href="#commands">指令大全</a>
+            <a class="toc__link" href="#functions-catalog">函数目录</a>
             <a class="toc__link" href="#config-yml">config.yml</a>
             <a class="toc__link" href="#config">scss-kit.config.json</a>
             <a class="toc__link" href="#faq">FAQ</a>
@@ -539,6 +540,107 @@
               说明：这会直接覆盖 assets 同名文件，可能误伤历史资源；日常建议使用
               <span class="code">npm run css:watch</span>（safe mode）。
             </p>
+
+            <h3 id="functions-catalog">函数目录（responsive 全量）</h3>
+            <p class="muted">
+              以下函数由 <span class="code">scss-kit:generate</span> 产出在
+              <span class="code">src/styles/_responsive.scss</span>，并被
+              <span class="code">r.resp</span> / <span class="code">r.vw</span>
+              与自动生成器共同使用。
+            </p>
+
+            <div class="table">
+              <div class="row">
+                <div class="cell cmd">
+                  r.resp(pc, mobile, desktopType[, mobileType])
+                </div>
+                <div class="cell">
+                  业务主函数（字体/需兜底）：PC 输出
+                  <span class="code">clamp</span>；Mobile 由扫描器生成
+                  <span class="code">clamp_mb(...)</span> 覆盖；第 3/4
+                  参数分别控制 PC/Mobile type。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r.vw(pc, mobile)</div>
+                <div class="cell">
+                  业务主函数（间距/尺寸）：PC 输出
+                  <span class="code">min(vw, px)</span>，Mobile 由扫描器生成纯
+                  <span class="code">vw</span> 覆盖。
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="cell cmd">
+                  r.min_px(mobile, type[, range, overrideCoef])
+                </div>
+                <div class="cell">
+                  计算 clamp 最小值：排版类 type 在 mobile 下走“375 缩放 +
+                  可读性 floor”，其余按系数表。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r.coef(type[, range])</div>
+                <div class="cell">
+                  读取 <span class="code">coefficients.mobile/desktop</span> 的
+                  type 系数。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r.clamp_pc(pc, min)</div>
+                <div class="cell">
+                  生成 PC clamp：<span class="code"
+                    >clamp(min, calc(pc * var(--px-to-vw)), pc)</span
+                  >
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r.clamp_mb(mobile, min)</div>
+                <div class="cell">
+                  生成移动端 clamp：<span class="code"
+                    >clamp(min, calc(mobile * var(--px-to-vw-mb)), mobile)</span
+                  >
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r.vw_pc(pc)</div>
+                <div class="cell">
+                  生成 PC vw 并上限兜底：<span class="code"
+                    >min(calc(pc * var(--px-to-vw)), pc)</span
+                  >
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r.vw_mb(mobile)</div>
+                <div class="cell">
+                  生成移动端纯 vw：<span class="code"
+                    >calc(mobile * var(--px-to-vw-mb))</span
+                  >
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="cell cmd">r._to-px(value)</div>
+                <div class="cell">内部：无单位数字转 px。</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r._to-num(value)</div>
+                <div class="cell">
+                  内部：px/无单位数字转纯数字（其他单位报错）。
+                </div>
+              </div>
+            </div>
+
+            <div class="codeblock">
+              <pre><code>/* 推荐写法 */
+.title {
+  font-size: r.resp(40px, 24px, h1, h2);
+}
+
+.card {
+  margin-top: r.vw(40px, 24px);
+}</code></pre>
+            </div>
           </section>
 
           <section id="config-yml" class="doc-section">

@@ -11,6 +11,7 @@
   },
   "autofill": {
     "function": "r.resp",
+    "vwFunction": "r.vw",
     "mobileMax": 850,
     "scanDirs": [
       "src/styles"

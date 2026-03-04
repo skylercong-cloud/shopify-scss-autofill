@@ -94,8 +94,36 @@ $coef-desktop: (  h1: 0.625,
   @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw-mb)), #{$v});
 }
 
-// resp(): write PC with mobile+type embedded (for scss-kit autofill scanning)
-@function resp($pc, $mobile, $type) {
+// 直接输出 PC 段 vw，并用设计稿 px 做上限兜底。
+@function vw_pc($pc) {
+  $v: _to-px($pc);
+  $n: _to-num($pc);
+  @return min(calc(#{$n} * var(--px-to-vw)), #{$v});
+}
+
+// 直接输出移动段 vw（无 clamp）。
+@function vw_mb($mobile) {
+  $n: _to-num($mobile);
+  @return calc(#{$n} * var(--px-to-vw-mb));
+}
+
+// vw(): spacing-first helper
+// - PC: min(vw, px)
+// - Mobile: pure vw (via autofill overrides)
+// - arg1: pc
+// - arg2: mobile (used by autofill scanner for mobile overrides)
+@function vw($pc, $mobile) {
+  @if meta.type-of($pc) != number or meta.type-of($mobile) != number {
+    @error "vw() expects numeric px values for both pc and mobile";
+  }
+  @return vw_pc($pc);
+}
+
+// resp():
+// - arg3: desktop type
+// - arg4 (optional): mobile type, defaults to desktop type
+// Keep both types in source so scss-kit autofill scanner can emit mobile overrides.
+@function resp($pc, $mobile, $type, $mobile-type: null) {
   @if meta.type-of($pc) != number {
     @error "resp() expects a number (px) for pc value";
   }

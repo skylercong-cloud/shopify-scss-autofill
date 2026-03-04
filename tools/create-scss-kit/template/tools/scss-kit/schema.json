@@ -25,6 +25,7 @@
       "type": "object",
       "properties": {
         "function": {"type": "string"},
+        "vwFunction": {"type": "string"},
         "mobileMax": {"type": "integer", "minimum": 1},
         "scanDirs": {"type": "array", "items": {"type": "string"}},
         "output": {"type": "string"},

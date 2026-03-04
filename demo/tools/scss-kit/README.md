@@ -1,6 +1,6 @@
 # scss-kit（本仓库内置工具）
 
-目的：在 Shopify ThemeKit 开发里实现“写 SCSS（src/styles）→ 编译 CSS（assets）→ theme watch 上传”，并提供一套基于 `r.resp(pc, mobile, type)` 的移动端覆盖自动生成能力。
+目的：在 Shopify ThemeKit 开发里实现“写 SCSS（src/styles）→ 编译 CSS（assets）→ theme watch 上传”，并提供一套基于 `r.resp(pc, mobile, desktopType[, mobileType])` 与 `r.vw(pc, mobile)` 的移动端覆盖自动生成能力。
 
 ## 拷贝接入（新项目）
 
@@ -56,6 +56,16 @@
 
 - 顶部 `@use "./_responsive-autofill.<page>.generated" as auto;`
 - 底部 `@include auto.responsive_autofill_overrides();`（确保覆盖顺序）
+
+推荐约定：
+
+- 字体/需要下限兜底的值：使用 `r.resp(pc, mobile, desktopType[, mobileType])`
+- 大多数间距（padding/margin/gap）：使用 `r.vw(pc, mobile)`
+
+`r.vw(pc, mobile)` 的行为：
+
+- PC 输出 `min(vw, px)`，例如 `r.vw(40px, 24px)` → `min(2.0833vw, 40px)`
+- 自动生成的移动端覆盖直接输出 `vw`，例如 `3.2vw`
 
 ## CSS 编译（safe mode）
 

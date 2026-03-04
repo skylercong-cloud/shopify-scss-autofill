@@ -104,6 +104,7 @@ function makeDefaultConfig() {
     },
     autofill: {
       function: 'r.resp',
+      vwFunction: 'r.vw',
       mobileMax: 850,
       scanDirs: ['src/styles'],
       output: 'src/styles/_responsive-autofill.generated.scss',

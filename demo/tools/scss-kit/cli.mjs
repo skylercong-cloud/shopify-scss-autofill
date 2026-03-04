@@ -67,6 +67,7 @@ function getMobileMax(cfg) {
 
 function getAutofill(cfg) {
   const fn = cfg?.autofill?.function ?? 'r.resp'
+  const vwFn = cfg?.autofill?.vwFunction
   const mobileMax = getMobileMax(cfg)
   const scanDirs = cfg?.autofill?.scanDirs ?? [
     cfg?.paths?.scssSrcDir ?? 'src/styles',
@@ -82,9 +83,27 @@ function getAutofill(cfg) {
   }
   const ns = parts[0]
   const name = parts[1]
+
+  const defaultVwFn = `${ns}.vw`
+  const vwParts = String(vwFn ?? defaultVwFn).split('.')
+  if (vwParts.length !== 2 || !vwParts[0] || !vwParts[1]) {
+    throw new Error(
+      `Invalid autofill.vwFunction: ${String(
+        vwFn
+      )}. Expected format: <ns>.<name> (e.g. ${defaultVwFn})`
+    )
+  }
+  if (vwParts[0] !== ns) {
+    throw new Error(
+      `autofill.vwFunction namespace must match autofill.function namespace (${ns})`
+    )
+  }
+  const vwName = vwParts[1]
+
   return {
     ns,
     name,
+    vwName,
     mobileMax,
     scanDirs,
     outputAbs: path.join(ROOT, output),
@@ -139,8 +158,7 @@ function splitTopLevelArgs(argsStr) {
   return args
 }
 
-function replaceRespCalls(value, { ns, name }) {
-  const token = `${ns}.${name}(`
+function replaceFunctionCalls(value, token, mapArgsToReplacement) {
   let out = ''
   let idx = 0
   let changed = false
@@ -183,10 +201,9 @@ function replaceRespCalls(value, { ns, name }) {
 
     const argsStr = value.slice(argsStart, i)
     const args = splitTopLevelArgs(argsStr)
-    if (args.length >= 3) {
-      const mobile = args[1]
-      const type = args[2]
-      out += `${ns}.clamp_mb(${mobile}, ${ns}.min_px(${mobile}, ${type}, mobile))`
+    const replacement = mapArgsToReplacement(args)
+    if (replacement != null) {
+      out += replacement
       changed = true
     } else {
       // Not enough args: keep original call.
@@ -197,6 +214,33 @@ function replaceRespCalls(value, { ns, name }) {
   }
 
   return { value: out.trim(), changed }
+}
+
+function replaceAutofillCalls(value, { ns, name, vwName }) {
+  const respToken = `${ns}.${name}(`
+  const replacedResp = replaceFunctionCalls(value, respToken, (args) => {
+    if (args.length < 3) return null
+    const mobile = args[1]
+    const desktopType = args[2]
+    const mobileType = args.length >= 4 ? args[3] : desktopType
+    return `${ns}.clamp_mb(${mobile}, ${ns}.min_px(${mobile}, ${mobileType}, mobile))`
+  })
+
+  const vwToken = `${ns}.${vwName}(`
+  const replacedVw = replaceFunctionCalls(
+    replacedResp.value,
+    vwToken,
+    (args) => {
+      if (args.length < 2) return null
+      const mobile = args[1]
+      return `${ns}.vw_mb(${mobile})`
+    }
+  )
+
+  return {
+    value: replacedVw.value.trim(),
+    changed: replacedResp.changed || replacedVw.changed,
+  }
 }
 
 function combineSelectors(parents, children) {
@@ -215,7 +259,7 @@ function combineSelectors(parents, children) {
   return out
 }
 
-function scanScssForAutofill_legacy(absFilePath, { ns, name }) {
+function scanScssForAutofill_legacy(absFilePath, { ns, name, vwName }) {
   const raw = fs.readFileSync(absFilePath, 'utf8')
   const lines = raw.split(/\r?\n/)
 
@@ -274,7 +318,7 @@ function scanScssForAutofill_legacy(absFilePath, { ns, name }) {
       value = value.replace(/\s!important\s*$/i, '').trim()
     }
 
-    const replaced = replaceRespCalls(value, { ns, name })
+    const replaced = replaceAutofillCalls(value, { ns, name, vwName })
     if (!replaced.changed) continue
 
     const finalValue = important
@@ -289,7 +333,7 @@ function scanScssForAutofill_legacy(absFilePath, { ns, name }) {
   return rules
 }
 
-function scanScssForAutofill_ast(absFilePath, { ns, name }) {
+function scanScssForAutofill_ast(absFilePath, { ns, name, vwName }) {
   // Lazy-load optional deps so `init` can run before `npm install`.
   /** @type {typeof import('postcss')} */
   let postcss
@@ -307,7 +351,7 @@ function scanScssForAutofill_ast(absFilePath, { ns, name }) {
   }
 
   const raw = fs.readFileSync(absFilePath, 'utf8')
-  const root = postcss.parse(raw, { syntax: scssSyntax, from: absFilePath })
+  const root = scssSyntax.parse(raw, { from: absFilePath })
 
   /** @type {{ selector: string, property: string, value: string, order: number }[]} */
   const rules = []
@@ -331,7 +375,7 @@ function scanScssForAutofill_ast(absFilePath, { ns, name }) {
           const property = String(child.prop)
           let value = String(child.value ?? '').trim()
 
-          const replaced = replaceRespCalls(value, { ns, name })
+          const replaced = replaceAutofillCalls(value, { ns, name, vwName })
           if (!replaced.changed) continue
 
           const finalValue = child.important
@@ -361,12 +405,12 @@ function scanScssForAutofill_ast(absFilePath, { ns, name }) {
   return rules
 }
 
-function scanScssForAutofill(absFilePath, { ns, name }) {
+function scanScssForAutofill(absFilePath, { ns, name, vwName }) {
   try {
-    return scanScssForAutofill_ast(absFilePath, { ns, name })
+    return scanScssForAutofill_ast(absFilePath, { ns, name, vwName })
   } catch (e) {
     // Fallback for edge cases where parser can't handle a file.
-    return scanScssForAutofill_legacy(absFilePath, { ns, name })
+    return scanScssForAutofill_legacy(absFilePath, { ns, name, vwName })
   }
 }
 
@@ -381,11 +425,13 @@ function getAutofillEntries(cfg) {
 
 function generateAutofillScss(cfg, collectedRules) {
   const { ns, mobileMax } = getAutofill(cfg)
+  const desktopWidth = cfg?.design?.desktopWidth ?? 1920
+  const mobileWidth = cfg?.design?.mobileWidth ?? 750
 
   const header = `@use "./responsive" as ${ns};
 
 // Generated by scss-kit from ${CONFIG_NAME}
-// Source: scanned ${ns}.resp(pc, mobile, type) markers in scss.
+// Source: scanned ${ns}.resp(pc, mobile, desktopType[, mobileType]) and ${ns}.vw(pc, mobile) markers in scss.
 // Do not edit this file directly; re-run: npm run scss-kit:responsive:generate
 \n`
 
@@ -396,7 +442,8 @@ function generateAutofillScss(cfg, collectedRules) {
     return (
       header +
       mixinHeader +
-      `  @media screen and (max-width: ${mobileMax}px) {\n  }\n` +
+      `  :root {\n    --px-to-vw: calc(100vw / ${desktopWidth});\n  }\n\n` +
+      `  @media screen and (max-width: ${mobileMax}px) {\n    :root {\n      --px-to-vw-mb: calc(100vw / ${mobileWidth});\n    }\n  }\n` +
       mixinFooter
     )
   }
@@ -417,10 +464,21 @@ function generateAutofillScss(cfg, collectedRules) {
     blocks.push(`${selector} {\n${lines.join('\n')}\n}`)
   }
 
+  const scopedMobileVarBlocks = []
+  for (const selector of selectorMap.keys()) {
+    scopedMobileVarBlocks.push(
+      `${selector} {\n  --px-to-vw-mb: calc(100vw / ${mobileWidth});\n}`
+    )
+  }
+
   return (
     header +
     mixinHeader +
+    `  :root {\n    --px-to-vw: calc(100vw / ${desktopWidth});\n  }\n\n` +
     `  @media screen and (max-width: ${mobileMax}px) {\n` +
+    `    :root {\n      --px-to-vw-mb: calc(100vw / ${mobileWidth});\n    }\n\n` +
+    scopedMobileVarBlocks.map((b) => b.replaceAll(/^/gm, '    ')).join('\n\n') +
+    `\n\n` +
     blocks.map((b) => b.replaceAll(/^/gm, '    ')).join('\n\n') +
     `\n  }` +
     mixinFooter
@@ -591,8 +649,36 @@ $coef-desktop: ${desktopMap};
   @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw-mb)), #{$v});
 }
 
-// resp(): write PC with mobile+type embedded (for scss-kit autofill scanning)
-@function resp($pc, $mobile, $type) {
+// 直接输出 PC 段 vw，并用设计稿 px 做上限兜底。
+@function vw_pc($pc) {
+  $v: _to-px($pc);
+  $n: _to-num($pc);
+  @return min(calc(#{$n} * var(--px-to-vw)), #{$v});
+}
+
+// 直接输出移动段 vw（无 clamp）。
+@function vw_mb($mobile) {
+  $n: _to-num($mobile);
+  @return calc(#{$n} * var(--px-to-vw-mb));
+}
+
+// vw(): spacing-first helper
+// - PC: min(vw, px)
+// - Mobile: pure vw (via autofill overrides)
+// - arg1: pc
+// - arg2: mobile (used by autofill scanner for mobile overrides)
+@function vw($pc, $mobile) {
+  @if meta.type-of($pc) != number or meta.type-of($mobile) != number {
+    @error "vw() expects numeric px values for both pc and mobile";
+  }
+  @return vw_pc($pc);
+}
+
+// resp():
+// - arg3: desktop type
+// - arg4 (optional): mobile type, defaults to desktop type
+// Keep both types in source so scss-kit autofill scanner can emit mobile overrides.
+@function resp($pc, $mobile, $type, $mobile-type: null) {
   @if meta.type-of($pc) != number {
     @error "resp() expects a number (px) for pc value";
   }
@@ -864,7 +950,7 @@ function main() {
           action: 'responsive:template',
           ok: false,
           reason:
-            'deprecated: responsive map mode removed; use r.resp(pc, mobile, type) + responsive:generate',
+            'deprecated: responsive map mode removed; use r.resp(pc, mobile, desktopType[, mobileType]) + responsive:generate',
         },
         null,
         2

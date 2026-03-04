@@ -7,7 +7,7 @@
 ## 核心目标
 
 - 写 SCSS（`src/styles`）→ 自动编译为 CSS（`assets/*.css`）→ ThemeKit (`theme watch`) 自动上传 → 刷新即可看到效果。
-- 响应式：PC(1920) + Mobile(750) 双设计稿，通过 `r.resp(pc, mobile, type)` 埋点 + 自动生成移动端覆盖。
+- 响应式：PC(1920) + Mobile(750) 双设计稿，通过 `r.resp(pc, mobile, desktopType[, mobileType])` 埋点 + 自动生成移动端覆盖。
 
 ## 关键约束（不要破坏）
 

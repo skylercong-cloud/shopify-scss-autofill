@@ -67,6 +67,7 @@ function getMobileMax(cfg) {
 
 function getAutofill(cfg) {
   const fn = cfg?.autofill?.function ?? 'r.resp'
+  const vwFn = cfg?.autofill?.vwFunction
   const mobileMax = getMobileMax(cfg)
   const scanDirs = cfg?.autofill?.scanDirs ?? [
     cfg?.paths?.scssSrcDir ?? 'src/styles',
@@ -82,9 +83,27 @@ function getAutofill(cfg) {
   }
   const ns = parts[0]
   const name = parts[1]
+
+  const defaultVwFn = `${ns}.vw`
+  const vwParts = String(vwFn ?? defaultVwFn).split('.')
+  if (vwParts.length !== 2 || !vwParts[0] || !vwParts[1]) {
+    throw new Error(
+      `Invalid autofill.vwFunction: ${String(
+        vwFn
+      )}. Expected format: <ns>.<name> (e.g. ${defaultVwFn})`
+    )
+  }
+  if (vwParts[0] !== ns) {
+    throw new Error(
+      `autofill.vwFunction namespace must match autofill.function namespace (${ns})`
+    )
+  }
+  const vwName = vwParts[1]
+
   return {
     ns,
     name,
+    vwName,
     mobileMax,
     scanDirs,
     outputAbs: path.join(ROOT, output),
@@ -139,8 +158,7 @@ function splitTopLevelArgs(argsStr) {
   return args
 }
 
-function replaceRespCalls(value, { ns, name }) {
-  const token = `${ns}.${name}(`
+function replaceFunctionCalls(value, token, mapArgsToReplacement) {
   let out = ''
   let idx = 0
   let changed = false
@@ -183,11 +201,9 @@ function replaceRespCalls(value, { ns, name }) {
 
     const argsStr = value.slice(argsStart, i)
     const args = splitTopLevelArgs(argsStr)
-    if (args.length >= 3) {
-      const mobile = args[1]
-      const desktopType = args[2]
-      const mobileType = args.length >= 4 ? args[3] : desktopType
-      out += `${ns}.clamp_mb(${mobile}, ${ns}.min_px(${mobile}, ${mobileType}, mobile))`
+    const replacement = mapArgsToReplacement(args)
+    if (replacement != null) {
+      out += replacement
       changed = true
     } else {
       // Not enough args: keep original call.
@@ -198,6 +214,33 @@ function replaceRespCalls(value, { ns, name }) {
   }
 
   return { value: out.trim(), changed }
+}
+
+function replaceAutofillCalls(value, { ns, name, vwName }) {
+  const respToken = `${ns}.${name}(`
+  const replacedResp = replaceFunctionCalls(value, respToken, (args) => {
+    if (args.length < 3) return null
+    const mobile = args[1]
+    const desktopType = args[2]
+    const mobileType = args.length >= 4 ? args[3] : desktopType
+    return `${ns}.clamp_mb(${mobile}, ${ns}.min_px(${mobile}, ${mobileType}, mobile))`
+  })
+
+  const vwToken = `${ns}.${vwName}(`
+  const replacedVw = replaceFunctionCalls(
+    replacedResp.value,
+    vwToken,
+    (args) => {
+      if (args.length < 2) return null
+      const mobile = args[1]
+      return `${ns}.vw_mb(${mobile})`
+    }
+  )
+
+  return {
+    value: replacedVw.value.trim(),
+    changed: replacedResp.changed || replacedVw.changed,
+  }
 }
 
 function combineSelectors(parents, children) {
@@ -216,7 +259,7 @@ function combineSelectors(parents, children) {
   return out
 }
 
-function scanScssForAutofill_legacy(absFilePath, { ns, name }) {
+function scanScssForAutofill_legacy(absFilePath, { ns, name, vwName }) {
   const raw = fs.readFileSync(absFilePath, 'utf8')
   const lines = raw.split(/\r?\n/)
 
@@ -275,7 +318,7 @@ function scanScssForAutofill_legacy(absFilePath, { ns, name }) {
       value = value.replace(/\s!important\s*$/i, '').trim()
     }
 
-    const replaced = replaceRespCalls(value, { ns, name })
+    const replaced = replaceAutofillCalls(value, { ns, name, vwName })
     if (!replaced.changed) continue
 
     const finalValue = important
@@ -290,7 +333,7 @@ function scanScssForAutofill_legacy(absFilePath, { ns, name }) {
   return rules
 }
 
-function scanScssForAutofill_ast(absFilePath, { ns, name }) {
+function scanScssForAutofill_ast(absFilePath, { ns, name, vwName }) {
   // Lazy-load optional deps so `init` can run before `npm install`.
   /** @type {typeof import('postcss')} */
   let postcss
@@ -332,7 +375,7 @@ function scanScssForAutofill_ast(absFilePath, { ns, name }) {
           const property = String(child.prop)
           let value = String(child.value ?? '').trim()
 
-          const replaced = replaceRespCalls(value, { ns, name })
+          const replaced = replaceAutofillCalls(value, { ns, name, vwName })
           if (!replaced.changed) continue
 
           const finalValue = child.important
@@ -362,12 +405,12 @@ function scanScssForAutofill_ast(absFilePath, { ns, name }) {
   return rules
 }
 
-function scanScssForAutofill(absFilePath, { ns, name }) {
+function scanScssForAutofill(absFilePath, { ns, name, vwName }) {
   try {
-    return scanScssForAutofill_ast(absFilePath, { ns, name })
+    return scanScssForAutofill_ast(absFilePath, { ns, name, vwName })
   } catch (e) {
     // Fallback for edge cases where parser can't handle a file.
-    return scanScssForAutofill_legacy(absFilePath, { ns, name })
+    return scanScssForAutofill_legacy(absFilePath, { ns, name, vwName })
   }
 }
 
@@ -388,7 +431,7 @@ function generateAutofillScss(cfg, collectedRules) {
   const header = `@use "./responsive" as ${ns};
 
 // Generated by scss-kit from ${CONFIG_NAME}
-// Source: scanned ${ns}.resp(pc, mobile, type) markers in scss.
+// Source: scanned ${ns}.resp(pc, mobile, desktopType[, mobileType]) and ${ns}.vw(pc, mobile) markers in scss.
 // Do not edit this file directly; re-run: npm run scss-kit:responsive:generate
 \n`
 
@@ -604,6 +647,31 @@ $coef-desktop: ${desktopMap};
   $v: _to-px($mobile);
   $n: _to-num($mobile);
   @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw-mb)), #{$v});
+}
+
+// 直接输出 PC 段 vw，并用设计稿 px 做上限兜底。
+@function vw_pc($pc) {
+  $v: _to-px($pc);
+  $n: _to-num($pc);
+  @return min(calc(#{$n} * var(--px-to-vw)), #{$v});
+}
+
+// 直接输出移动段 vw（无 clamp）。
+@function vw_mb($mobile) {
+  $n: _to-num($mobile);
+  @return calc(#{$n} * var(--px-to-vw-mb));
+}
+
+// vw(): spacing-first helper
+// - PC: min(vw, px)
+// - Mobile: pure vw (via autofill overrides)
+// - arg1: pc
+// - arg2: mobile (used by autofill scanner for mobile overrides)
+@function vw($pc, $mobile) {
+  @if meta.type-of($pc) != number or meta.type-of($mobile) != number {
+    @error "vw() expects numeric px values for both pc and mobile";
+  }
+  @return vw_pc($pc);
 }
 
 // resp():
