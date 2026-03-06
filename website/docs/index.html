@@ -340,52 +340,277 @@
               </li>
             </ul>
 
-            <h3 class="doc-subhead">配置示例（节选）</h3>
+            <h3 class="doc-subhead">响应式字体大小最佳实践配置表</h3>
             <p class="muted">
               建议“字体用 <span class="code">r.resp</span>，间距优先用
               <span class="code">r.vw</span>；少量间距需下限时再改为
               <span class="code">r.resp</span>”。
             </p>
-            <div class="codeblock">
-              <pre><code>// 例：scss-kit.config.json（节选）
-{
-  "coefficients": {
-    "mobile": {
-      "h1": 0.52,
-      "h2": 0.55,
-      "h3": 0.55,
-      "body": 0.6,
-      "button-text": 0.6,
-      "price-large": 0.5
-    },
-    "desktop": {
-      "h1": 0.58,
-      "h2": 0.6,
-      "h3": 0.6,
-      "body": 0.65,
-      "button-text": 0.65,
-      "price-large": 0.55
-    }
-  },
-  "floors": {
-    "mobile": {
-      "h1": "24px",
-      "h2": "20px",
-      "h3": "18px",
-      "body": "14px",
-      "button-text": "14px",
-      "price-large": "22px"
-    },
-    "desktop": {
-      "h1": "28px",
-      "h2": "22px",
-      "h3": "18px",
-      "body": "14px",
-      "button-text": "14px",
-      "price-large": "24px"
-    }
-  }
-}</code></pre>
+
+            <h3 class="doc-subhead">PC端</h3>
+            <div class="table">
+              <div class="row">
+                <div class="cell cmd">元素类型</div>
+                <div class="cell">系数</div>
+                <div class="cell">绝对兜底值</div>
+                <div class="cell">说明</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd"><b>标题类</b></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H1</div>
+                <div class="cell">0.55-0.6</div>
+                <div class="cell">28px</div>
+                <div class="cell">主标题，保持视觉冲击力</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H2</div>
+                <div class="cell">0.6</div>
+                <div class="cell">22px</div>
+                <div class="cell">次级标题</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H3</div>
+                <div class="cell">0.6</div>
+                <div class="cell">18px</div>
+                <div class="cell">三级标题</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H4</div>
+                <div class="cell">0.6</div>
+                <div class="cell">16px</div>
+                <div class="cell">四级标题</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H5/H6</div>
+                <div class="cell">0.65</div>
+                <div class="cell">14px</div>
+                <div class="cell">小标题</div>
+              </div>
+
+              <div class="row">
+                <div class="cell cmd"><b>正文类</b></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">Body/段落</div>
+                <div class="cell">0.65</div>
+                <div class="cell">14px</div>
+                <div class="cell">主要阅读内容</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">小字/辅助文字</div>
+                <div class="cell">0.65</div>
+                <div class="cell">12px</div>
+                <div class="cell">如注释、说明</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">引用文字</div>
+                <div class="cell">0.6</div>
+                <div class="cell">16px</div>
+                <div class="cell">blockquote</div>
+              </div>
+
+              <div class="row">
+                <div class="cell cmd"><b>交互元素</b></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">按钮文字</div>
+                <div class="cell">0.65</div>
+                <div class="cell">14px</div>
+                <div class="cell">CTA按钮</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">导航链接</div>
+                <div class="cell">0.65</div>
+                <div class="cell">14px</div>
+                <div class="cell">主导航</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">表单标签</div>
+                <div class="cell">0.65</div>
+                <div class="cell">14px</div>
+                <div class="cell">label文字</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">表单输入</div>
+                <div class="cell">0.65</div>
+                <div class="cell">14px</div>
+                <div class="cell">input/textarea</div>
+              </div>
+
+              <div class="row">
+                <div class="cell cmd"><b>特殊元素</b></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">价格（大）</div>
+                <div class="cell">0.55</div>
+                <div class="cell">24px</div>
+                <div class="cell">突出显示的价格</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">价格（小）</div>
+                <div class="cell">0.65</div>
+                <div class="cell">14px</div>
+                <div class="cell">常规价格</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">徽章/标签</div>
+                <div class="cell">0.7</div>
+                <div class="cell">12px</div>
+                <div class="cell">badge/tag</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">面包屑</div>
+                <div class="cell">0.7</div>
+                <div class="cell">12px</div>
+                <div class="cell">breadcrumb</div>
+              </div>
+            </div>
+
+            <h3 class="doc-subhead">移动端</h3>
+            <div class="table">
+              <div class="row">
+                <div class="cell cmd">元素类型</div>
+                <div class="cell">系数</div>
+                <div class="cell">绝对兜底值</div>
+                <div class="cell">说明</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd"><b>标题类</b></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H1</div>
+                <div class="cell">0.5-0.55</div>
+                <div class="cell">24px</div>
+                <div class="cell">移动端主标题</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H2</div>
+                <div class="cell">0.55</div>
+                <div class="cell">20px</div>
+                <div class="cell">次级标题</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H3</div>
+                <div class="cell">0.55</div>
+                <div class="cell">18px</div>
+                <div class="cell">三级标题</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H4</div>
+                <div class="cell">0.6</div>
+                <div class="cell">16px</div>
+                <div class="cell">四级标题</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H5/H6</div>
+                <div class="cell">0.6</div>
+                <div class="cell">14px</div>
+                <div class="cell">小标题</div>
+              </div>
+
+              <div class="row">
+                <div class="cell cmd"><b>正文类</b></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">Body/段落</div>
+                <div class="cell">0.6</div>
+                <div class="cell">14px</div>
+                <div class="cell">移动端可读性优先</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">小字/辅助文字</div>
+                <div class="cell">0.65</div>
+                <div class="cell">12px</div>
+                <div class="cell">最小可读尺寸</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">引用文字</div>
+                <div class="cell">0.55</div>
+                <div class="cell">14px</div>
+                <div class="cell">blockquote</div>
+              </div>
+
+              <div class="row">
+                <div class="cell cmd"><b>交互元素</b></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">按钮文字</div>
+                <div class="cell">0.6</div>
+                <div class="cell">14px</div>
+                <div class="cell">确保可点击性</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">导航链接</div>
+                <div class="cell">0.6</div>
+                <div class="cell">14px</div>
+                <div class="cell">移动导航</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">表单标签</div>
+                <div class="cell">0.6</div>
+                <div class="cell">14px</div>
+                <div class="cell">label文字</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">表单输入</div>
+                <div class="cell">0.6</div>
+                <div class="cell">16px</div>
+                <div class="cell">iOS最佳实践（避免自动缩放）</div>
+              </div>
+
+              <div class="row">
+                <div class="cell cmd"><b>特殊元素</b></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">价格（大）</div>
+                <div class="cell">0.5</div>
+                <div class="cell">22px</div>
+                <div class="cell">突出价格</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">价格（小）</div>
+                <div class="cell">0.6</div>
+                <div class="cell">14px</div>
+                <div class="cell">常规价格</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">徽章/标签</div>
+                <div class="cell">0.65</div>
+                <div class="cell">11px</div>
+                <div class="cell">badge/tag</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">面包屑</div>
+                <div class="cell">0.65</div>
+                <div class="cell">11px</div>
+                <div class="cell">breadcrumb</div>
+              </div>
             </div>
           </section>
 
