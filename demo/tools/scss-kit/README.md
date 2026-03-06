@@ -61,11 +61,67 @@
 
 - 字体/需要下限兜底的值：使用 `r.resp(pc, mobile, desktopType[, mobileType])`
 - 大多数间距（padding/margin/gap）：使用 `r.vw(pc, mobile)`
+- 少量间距若确实需要最小值：改用 `r.resp(...)`（不要给 `r.vw` 追加参数）
 
 `r.vw(pc, mobile)` 的行为：
 
 - PC 输出 `min(vw, px)`，例如 `r.vw(40px, 24px)` → `min(2.0833vw, 40px)`
 - 自动生成的移动端覆盖直接输出 `vw`，例如 `3.2vw`
+
+## Responsive 函数目录（完整）
+
+以下函数都定义在 `src/styles/_responsive.scss`（由 `scss-kit` 生成）：
+
+### 业务侧常用（推荐直接调用）
+
+- `r.resp($pc, $mobile, $type, $mobile-type: null)`
+  - 用途：用于“字体/需要下限兜底”的场景。
+  - PC 输出：`clamp_pc($pc, min_px($pc, $type, desktop))`。
+  - Mobile 输出：由自动生成器扫描 `r.resp(...)` 后，在 `@media` 中生成 `clamp_mb(...)` 覆盖。
+  - 第 3/4 参数：第 3 个是 PC type；第 4 个是 mobile type（可省略，省略时沿用第 3 个）。
+  - 示例：`font-size: r.resp(40px, 24px, h1, h2);`
+
+- `r.vw($pc, $mobile)`
+  - 用途：用于“间距/尺寸优先流式”的场景（如 padding/margin/gap/宽高）。
+  - PC 输出：`min(vw, px)`（防止超大屏继续放大）。
+  - Mobile 输出：由自动生成器扫描 `r.vw(...)` 后，在 `@media` 中生成纯 `vw` 覆盖。
+  - 说明：`r.vw` 仅保留两个参数；若你需要最小值下限，请使用 `r.resp(...)`。
+  - 示例：`margin-top: r.vw(40px, 24px);`
+
+### 由 `r.resp` / `r.vw` 间接使用（一般不直接写）
+
+- `r.min_px($value, $type, $range: mobile, $override-coef: null, $override-floor: null)`
+  - 用途：计算 clamp 最小值。
+  - 规则：
+    - 命名 type：按 `max(designPx * coef(type), floor(type))` 计算（floor 来自 `floors.mobile/desktop`）。
+    - 数字 type：可直接传系数（例如 `0.6`），此时跳过 type 表查询；可选叠加 `override-floor`。
+
+- `r.coef($type, $range: mobile)`
+  - 用途：读取 `coefficients.mobile/desktop` 中对应 type 的系数。
+
+- `r._floor($type, $range: mobile)`
+  - 用途：读取 `floors.mobile/desktop` 中对应 type 的绝对兜底值。
+
+- `r.clamp_pc($pc, $min)`
+  - 用途：生成 PC clamp。
+  - 结构：`clamp($min, calc($pc * var(--px-to-vw)), $pc)`。
+
+- `r.clamp_mb($mobile, $min)`
+  - 用途：生成移动端 clamp。
+  - 结构：`clamp($min, calc($mobile * var(--px-to-vw-mb)), $mobile)`。
+
+- `r.vw_pc($pc)`
+  - 用途：生成 PC 端 `vw` 并带上限。
+  - 结构：`min(calc($pc * var(--px-to-vw)), $pc)`。
+
+- `r.vw_mb($mobile)`
+  - 用途：生成移动端纯 `vw`。
+  - 结构：`calc($mobile * var(--px-to-vw-mb))`。
+
+### 内部工具函数（不建议业务直接使用）
+
+- `_to-px($value)`：把无单位数字转为 `px`。
+- `_to-num($value)`：把 `px` 或无单位数字转为纯数字（其他单位会报错）。
 
 ## CSS 编译（safe mode）
 

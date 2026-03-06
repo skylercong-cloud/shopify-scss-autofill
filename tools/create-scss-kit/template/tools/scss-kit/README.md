@@ -61,6 +61,7 @@
 
 - 字体/需要下限兜底的值：使用 `r.resp(pc, mobile, desktopType[, mobileType])`
 - 大多数间距（padding/margin/gap）：使用 `r.vw(pc, mobile)`
+- 少量间距若确实需要最小值：改用 `r.resp(...)`（不要给 `r.vw` 追加参数）
 
 `r.vw(pc, mobile)` 的行为：
 
@@ -84,18 +85,22 @@
   - 用途：用于“间距/尺寸优先流式”的场景（如 padding/margin/gap/宽高）。
   - PC 输出：`min(vw, px)`（防止超大屏继续放大）。
   - Mobile 输出：由自动生成器扫描 `r.vw(...)` 后，在 `@media` 中生成纯 `vw` 覆盖。
+  - 说明：`r.vw` 仅保留两个参数；若你需要最小值下限，请使用 `r.resp(...)`。
   - 示例：`margin-top: r.vw(40px, 24px);`
 
 ### 由 `r.resp` / `r.vw` 间接使用（一般不直接写）
 
-- `r.min_px($mobile, $type, $range: mobile, $override-coef: null)`
+- `r.min_px($value, $type, $range: mobile, $override-coef: null, $override-floor: null)`
   - 用途：计算 clamp 最小值。
   - 规则：
-    - 在 `mobile` 且 `type` 属于 `h1/h2/h3/body/small/button-text` 时，走可读性规则（按 375 缩放并套 floor）。
-    - 其他情况按系数表 `coef(type, range)` 计算。
+    - 命名 type：按 `max(designPx * coef(type), floor(type))` 计算（floor 来自 `floors.mobile/desktop`）。
+    - 数字 type：可直接传系数（例如 `0.6`），此时跳过 type 表查询；可选叠加 `override-floor`。
 
 - `r.coef($type, $range: mobile)`
   - 用途：读取 `coefficients.mobile/desktop` 中对应 type 的系数。
+
+- `r._floor($type, $range: mobile)`
+  - 用途：读取 `floors.mobile/desktop` 中对应 type 的绝对兜底值。
 
 - `r.clamp_pc($pc, $min)`
   - 用途：生成 PC clamp。

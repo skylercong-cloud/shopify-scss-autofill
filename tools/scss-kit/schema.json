@@ -48,6 +48,13 @@
         "mobile": {"type": "object", "additionalProperties": {"type": "number"}},
         "desktop": {"type": "object", "additionalProperties": {"type": "number"}}
       }
+    },
+    "floors": {
+      "type": "object",
+      "properties": {
+        "mobile": {"type": "object", "additionalProperties": {"type": "string"}},
+        "desktop": {"type": "object", "additionalProperties": {"type": "string"}}
+      }
     }
   }
 }

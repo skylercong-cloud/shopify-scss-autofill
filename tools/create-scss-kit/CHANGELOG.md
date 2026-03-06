@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0] - 2026-03-06
+
+### Added
+
+- Added `floors.mobile` / `floors.desktop` default config blocks for absolute minimum font-size floors.
+- Added `scale-100: 1` to default low-range coefficient presets.
+
+### Changed
+
+- Updated default typography/interaction coefficient presets to match the new `coef + floor` minimum strategy.
+- Synced template `tools/scss-kit` to latest source-of-truth implementation and docs.
+
 ## [0.2.0] - 2026-03-03 (建议发布版本)
 
 ### Added

@@ -4,7 +4,8 @@ Tooling for a stable Shopify Theme Kit workflow:
 
 - Write SCSS in `src/styles/`
 - Compile to `assets/*.css` (safe mode; avoids overwriting unknown legacy CSS)
-- Auto-generate **per-entry** mobile overrides from `r.resp(pc, mobile, type)`
+- Auto-generate **per-entry** mobile overrides from `r.resp(pc, mobile, desktopType[, mobileType])`
+- Use `r.vw(pc, mobile)` for spacing-first responsive values (mobile emits pure `vw`)
 - Upload via Theme Kit `theme watch`
 
 ## Use it (recommended)

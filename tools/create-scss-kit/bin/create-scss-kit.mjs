@@ -79,18 +79,7 @@ function parseArgs(argv) {
   return out
 }
 
-function makeLowRangeCoefficients() {
-  const out = {}
-  for (let i = 0; i <= 50; i += 5) {
-    const key = `scale-${String(i).padStart(2, '0')}`
-    out[key] = Number((i / 100).toFixed(2))
-  }
-  return out
-}
-
 function makeDefaultConfig() {
-  const lowRange = makeLowRangeCoefficients()
-
   return {
     $schema: './tools/scss-kit/schema.json',
     design: {
@@ -127,30 +116,82 @@ function makeDefaultConfig() {
     },
     coefficients: {
       mobile: {
-        ...lowRange,
-        h1: 0.5,
-        h2: 0.625,
-        h3: 0.75,
-        body: 0.857,
-        small: 1,
-        'section-gap': 0.5,
-        'card-gap': 0.6,
-        'element-gap': 0.75,
-        'button-text': 1,
-        icon: 0.67,
+        h1: 0.52,
+        h2: 0.55,
+        h3: 0.55,
+        h4: 0.6,
+        h5: 0.6,
+        h6: 0.6,
+        body: 0.6,
+        small: 0.65,
+        quote: 0.55,
+        'button-text': 0.6,
+        'nav-link': 0.6,
+        'form-label': 0.6,
+        'form-input': 0.6,
+        'price-large': 0.5,
+        'price-small': 0.6,
+        badge: 0.65,
+        breadcrumb: 0.65,
       },
       desktop: {
-        ...lowRange,
-        h1: 0.625,
-        h2: 0.67,
-        h3: 0.75,
-        body: 0.875,
-        small: 1,
-        'section-gap': 0.5,
-        'card-gap': 0.6,
-        'element-gap': 0.67,
-        'button-text': 1,
-        icon: 0.625,
+        h1: 0.58,
+        h2: 0.6,
+        h3: 0.6,
+        h4: 0.6,
+        h5: 0.65,
+        h6: 0.65,
+        body: 0.65,
+        small: 0.65,
+        quote: 0.6,
+        'button-text': 0.65,
+        'nav-link': 0.65,
+        'form-label': 0.65,
+        'form-input': 0.65,
+        'price-large': 0.55,
+        'price-small': 0.65,
+        badge: 0.7,
+        breadcrumb: 0.7,
+      },
+    },
+    floors: {
+      mobile: {
+        h1: '24px',
+        h2: '20px',
+        h3: '18px',
+        h4: '16px',
+        h5: '14px',
+        h6: '14px',
+        body: '14px',
+        small: '12px',
+        quote: '14px',
+        'button-text': '14px',
+        'nav-link': '14px',
+        'form-label': '14px',
+        'form-input': '16px',
+        'price-large': '22px',
+        'price-small': '14px',
+        badge: '11px',
+        breadcrumb: '11px',
+      },
+      desktop: {
+        h1: '28px',
+        h2: '22px',
+        h3: '18px',
+        h4: '16px',
+        h5: '14px',
+        h6: '14px',
+        body: '14px',
+        small: '12px',
+        quote: '16px',
+        'button-text': '14px',
+        'nav-link': '14px',
+        'form-label': '14px',
+        'form-input': '14px',
+        'price-large': '24px',
+        'price-small': '14px',
+        badge: '12px',
+        breadcrumb: '12px',
       },
     },
   }

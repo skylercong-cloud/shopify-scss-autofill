@@ -6,7 +6,7 @@
     <title>shopify-scss-autofill</title>
     <meta
       name="description"
-      content="面向 Shopify Theme Kit 的 SCSS 工具链：安全编译 CSS + r.resp(pc, mobile, type) 自动生成移动端覆盖（per-entry）。"
+      content="面向 Shopify Theme Kit 的 SCSS 工具链：安全编译 CSS + r.resp(pc, mobile, desktopType[, mobileType]) / r.vw(pc, mobile) 自动生成移动端覆盖（per-entry）。"
     />
     <link
       rel="icon"
@@ -152,15 +152,15 @@
                 aria-label="SCSS example"
               >
                 <pre><code>.product-card {
-  padding: 24px;
+  padding: r.vw(24px, 16px);
 
   &__title {
-    font-size: r.resp(40px, 20px, h1);
-    line-height: r.resp(48px, 26px, body);
+    font-size: r.resp(40px, 24px, h1, h2);
+    line-height: r.resp(48px, 28px, body);
   }
 
   .price {
-    margin-top: r.resp(24px, 12px, body);
+    margin-top: r.vw(24px, 12px);
   }
 
   &:hover {
@@ -217,16 +217,16 @@
 
 /* PC */
 .product-card {
-  padding: 24px;
+  padding: min(calc(24 * var(--px-to-vw)), 24px);
 }
 
 .product-card__title {
-  font-size: clamp(25px, calc(40 * var(--px-to-vw)), 40px);
-  line-height: clamp(42px, calc(48 * var(--px-to-vw)), 48px);
+  font-size: clamp(28px, calc(40 * var(--px-to-vw)), 40px);
+  line-height: clamp(31.2px, calc(48 * var(--px-to-vw)), 48px);
 }
 
 .product-card .price {
-  margin-top: clamp(21px, calc(24 * var(--px-to-vw)), 24px);
+  margin-top: min(calc(24 * var(--px-to-vw)), 24px);
 }
 
 .product-card:hover .product-card__title {
@@ -235,13 +235,17 @@
 
 /* Mobile overrides (autofill) */
 @media (max-width: 850px) {
+  .product-card {
+    padding: calc(16 * var(--px-to-vw-mb));
+  }
+
   .product-card__title {
-    font-size: clamp(16px, calc(20 * var(--px-to-vw-mb)), 20px);
-    line-height: clamp(13px, calc(26 * var(--px-to-vw-mb)), 26px);
+    font-size: clamp(20px, calc(24 * var(--px-to-vw-mb)), 24px);
+    line-height: clamp(16.8px, calc(28 * var(--px-to-vw-mb)), 28px);
   }
 
   .product-card .price {
-    margin-top: clamp(12px, calc(12 * var(--px-to-vw-mb)), 12px);
+    margin-top: calc(12 * var(--px-to-vw-mb));
   }
 
   .product-card:hover .product-card__title {
