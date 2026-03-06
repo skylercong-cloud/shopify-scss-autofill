@@ -1,3 +1,4 @@
 import './style.css'
+import { initCodeCopyButtons } from './code-copy'
 
-// Home page is static; keep JS minimal.
+initCodeCopyButtons()

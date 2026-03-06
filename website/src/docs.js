@@ -1,4 +1,5 @@
 import './style.css'
+import { initCodeCopyButtons } from './code-copy'
 
 // Docs page is static; keep JS minimal.
 
@@ -61,3 +62,4 @@ function initTocActiveState() {
 }
 
 initTocActiveState()
+initCodeCopyButtons()
