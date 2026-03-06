@@ -508,3 +508,13 @@ p { margin: 8px 0 0; }
   color: rgba(15, 23, 42, 0.86);
   background: rgba(2, 6, 23, 0.03);
 }
+
+/* 4-column data tables used by responsive best-practice section */
+.table.table--four {
+  overflow-x: auto;
+}
+
+.table.table--four .row {
+  grid-template-columns: 200px 110px 120px minmax(260px, 1fr);
+  min-width: 760px;
+}
