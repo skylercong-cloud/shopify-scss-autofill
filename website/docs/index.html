@@ -310,10 +310,9 @@
           </section>
 
           <section id="mobile-min" class="doc-section">
-            <h2>最小值生成规则</h2>
+            <h2>最值生成规则</h2>
             <p class="muted">
-              这个规则来自生成后的 <span class="code">_responsive.scss</span> 的
-              <span class="code">min_px()</span>。
+              这个规则来自生成后的 <span class="code">_responsive.scss</span>
             </p>
 
             <h3 class="doc-subhead">统一规则：系数 + 绝对兜底</h3>
@@ -339,6 +338,104 @@
                 表查询。
               </li>
             </ul>
+
+            <h3 class="doc-subhead">移动端三种设计稿方案（750 / 590 / 375）</h3>
+            <p class="muted">
+              现在移动端不只有“最小值规则”。根据
+              <span class="code">design.mobileWidth</span>，工具会选择不同的
+              <span class="code">mobileClampMode</span> 策略。
+            </p>
+            <div class="table table--four">
+              <div class="row">
+                <div class="cell cmd">设计稿</div>
+                <div class="cell">推荐模式</div>
+                <div class="cell">核心规则</div>
+                <div class="cell">配置建议</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">750</div>
+                <div class="cell"><span class="code">min-first</span></div>
+                <div class="cell">
+                  <span class="code">clamp(min, fluid, design)</span>，最小值由
+                  <span class="code">min_px()</span> 推导。
+                </div>
+                <div class="cell">
+                  重点维护
+                  <span class="code">coefficients.mobile</span> +
+                  <span class="code">floors.mobile</span>。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">590</div>
+                <div class="cell"><span class="code">dual-bound</span></div>
+                <div class="cell">
+                  <span class="code">clamp(min, fluid, max)</span
+                  >，同时约束最小值与最大值。
+                </div>
+                <div class="cell">
+                  同时配置
+                  <span class="code">floors.mobile</span> 与
+                  <span class="code">maxCoefficients.mobile</span> +
+                  <span class="code">ceilings.mobile</span>。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">375</div>
+                <div class="cell"><span class="code">max-first</span></div>
+                <div class="cell">
+                  <span class="code">clamp(design, fluid, max)</span
+                  >，以设计值为下限，避免小稿过小。
+                </div>
+                <div class="cell">
+                  重点配置
+                  <span class="code">maxCoefficients.mobile</span> +
+                  <span class="code">ceilings.mobile</span>。
+                </div>
+              </div>
+            </div>
+
+            <h3 class="doc-subhead">auto 模式判定规则</h3>
+            <ul class="list">
+              <li>
+                当 <span class="code">design.mobileWidth &lt; 400</span> 时：
+                <span class="code">max-first</span>（典型 375）。
+              </li>
+              <li>
+                当
+                <span class="code">500 &lt;= design.mobileWidth &lt;= 600</span>
+                时：<span class="code">dual-bound</span>（典型 590）。
+              </li>
+              <li>
+                其他情况：<span class="code">min-first</span>（典型 750）。
+              </li>
+            </ul>
+
+            <h3 class="doc-subhead">对比示例代码（同一 mobile 值）</h3>
+            <p class="muted">
+              下面以同一个声明
+              <span class="code">r.resp(56px, 26px, h1)</span>
+              为例，展示在三种移动端设计稿下的核心差异（示意）。
+            </p>
+            <div
+              class="codeblock"
+              role="region"
+              aria-label="mobile clamp compare"
+            >
+              <pre><code>// Source SCSS
+font-size: r.resp(56px, 26px, h1);
+
+// 750 design / min-first
+// => clamp(min_px(26px), fluid(26), 26px)
+font-size: clamp(24px, calc(26 * var(--px-to-vw-mb)), 26px);
+
+// 590 design / dual-bound
+// => clamp(min_px(26px), fluid(26), max_px(26px))
+font-size: clamp(24px, calc(26 * var(--px-to-vw-mb)), 39px);
+
+// 375 design / max-first
+// => clamp(26px, fluid(26), max_px(26px))
+font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
+            </div>
 
             <h3 class="doc-subhead">响应式字体大小最佳实践配置表</h3>
             <p class="muted">
@@ -480,7 +577,7 @@
               </div>
             </div>
 
-            <h3 class="doc-subhead">移动端</h3>
+            <h3 class="doc-subhead">移动端（750 设计稿 / min-first）</h3>
             <div class="table table--four">
               <div class="row">
                 <div class="cell cmd">元素类型</div>
