@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.1] - 2026-03-10
+
+### Added
+
+- Added `responsive.mobileProfilePreset` config (`off | auto | 375 | 590`) to support built-in mobile profile presets.
+- Added built-in 590 and 375 preset value tables in scss-kit runtime:
+  - 590 preset applies complete `coefficients.mobile` + `floors.mobile` + `maxCoefficients.mobile` + `ceilings.mobile` values.
+  - 375 preset applies complete `maxCoefficients.mobile` + `ceilings.mobile` values for max-first strategy.
+
+### Changed
+
+- `create-scss-kit` default scaffold now sets `responsive.mobileProfilePreset: "auto"`.
+- Synced updated `tools/scss-kit` runtime and schema to template and demo copies.
+
 ## [0.4.0] - 2026-03-10
 
 ### Added

@@ -10,6 +10,85 @@ const CONFIG_NAME = 'scss-kit.config.json'
 
 const DEFAULT_MOBILE_MAX = 850
 
+const MOBILE_PROFILE_PRESETS = {
+  590: {
+    coefficientsMobile: {
+      h1: 0.55,
+      h2: 0.6,
+      h3: 0.6,
+      h4: 0.6,
+      body: 0.65,
+      small: 0.65,
+      'button-text': 0.65,
+      'form-input': 1.0,
+      'price-large': 0.55,
+      badge: 0.65,
+    },
+    floorsMobile: {
+      h1: '22px',
+      h2: '20px',
+      h3: '18px',
+      h4: '16px',
+      body: '14px',
+      small: '12px',
+      'button-text': '14px',
+      'form-input': '16px',
+      'price-large': '20px',
+      badge: '11px',
+    },
+    maxCoefficientsMobile: {
+      h1: 1.4,
+      h2: 1.4,
+      h3: 1.4,
+      h4: 1.3,
+      body: 1.25,
+      small: 1.25,
+      'button-text': 1.25,
+      'form-input': 1.25,
+      'price-large': 1.4,
+      badge: 1.3,
+    },
+    ceilingsMobile: {
+      h1: '52px',
+      h2: '48px',
+      h3: '40px',
+      h4: '32px',
+      body: '20px',
+      small: '18px',
+      'button-text': '20px',
+      'form-input': '20px',
+      'price-large': '48px',
+      badge: '16px',
+    },
+  },
+  375: {
+    maxCoefficientsMobile: {
+      h1: 1.5,
+      h2: 1.5,
+      h3: 1.5,
+      h4: 1.5,
+      body: 1.3,
+      small: 1.3,
+      'button-text': 1.25,
+      'form-input': 1.25,
+      'price-large': 1.4,
+      badge: 1.3,
+    },
+    ceilingsMobile: {
+      h1: '48px',
+      h2: '42px',
+      h3: '36px',
+      h4: '30px',
+      body: '18px',
+      small: '16px',
+      'button-text': '20px',
+      'form-input': '20px',
+      'price-large': '40px',
+      badge: '14px',
+    },
+  },
+}
+
 function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'))
 }
@@ -108,6 +187,65 @@ function getAutofill(cfg) {
     scanDirs,
     outputAbs: path.join(ROOT, output),
     outputRel: toPosix(output),
+  }
+}
+
+function resolveMobileProfilePreset(cfg) {
+  const presetRaw = cfg?.responsive?.mobileProfilePreset ?? 'off'
+  const preset = String(presetRaw)
+  if (!['off', 'auto', '375', '590'].includes(preset)) {
+    throw new Error(
+      `Invalid responsive.mobileProfilePreset: ${preset}. Expected one of: off|auto|375|590`
+    )
+  }
+
+  let profileKey = null
+  if (preset === 'auto') {
+    const w = Number(cfg?.design?.mobileWidth)
+    if (w === 375 || w === 590) profileKey = String(w)
+  } else if (preset !== 'off') {
+    profileKey = preset
+  }
+
+  if (!profileKey) return cfg
+
+  const profile = MOBILE_PROFILE_PRESETS[profileKey]
+  if (!profile) return cfg
+
+  return {
+    ...cfg,
+    coefficients: {
+      ...(cfg.coefficients ?? {}),
+      mobile: {
+        ...(cfg?.coefficients?.mobile ?? {}),
+        ...(profile.coefficientsMobile ?? {}),
+      },
+      desktop: { ...(cfg?.coefficients?.desktop ?? {}) },
+    },
+    floors: {
+      ...(cfg.floors ?? {}),
+      mobile: {
+        ...(cfg?.floors?.mobile ?? {}),
+        ...(profile.floorsMobile ?? {}),
+      },
+      desktop: { ...(cfg?.floors?.desktop ?? {}) },
+    },
+    maxCoefficients: {
+      ...(cfg.maxCoefficients ?? {}),
+      mobile: {
+        ...(cfg?.maxCoefficients?.mobile ?? {}),
+        ...(profile.maxCoefficientsMobile ?? {}),
+      },
+      desktop: { ...(cfg?.maxCoefficients?.desktop ?? {}) },
+    },
+    ceilings: {
+      ...(cfg.ceilings ?? {}),
+      mobile: {
+        ...(cfg?.ceilings?.mobile ?? {}),
+        ...(profile.ceilingsMobile ?? {}),
+      },
+      desktop: { ...(cfg?.ceilings?.desktop ?? {}) },
+    },
   }
 }
 
@@ -1044,7 +1182,8 @@ function doctor(cfg) {
 
 function main() {
   const cmd = process.argv[2] || 'help'
-  const { config } = loadConfig()
+  const { config: rawConfig } = loadConfig()
+  const config = resolveMobileProfilePreset(rawConfig)
 
   if (cmd === 'generate') {
     const scss = generateResponsiveScss(config)

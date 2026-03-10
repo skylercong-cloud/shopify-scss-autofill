@@ -16,6 +16,10 @@
     "responsive": {
       "type": "object",
       "properties": {
+        "mobileProfilePreset": {
+          "type": "string",
+          "enum": ["off", "auto", "375", "590"]
+        },
         "mobileClampMode": {
           "type": "string",
           "enum": ["auto", "min-first", "max-first", "dual-bound"]

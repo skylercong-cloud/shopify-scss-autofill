@@ -88,6 +88,7 @@ function makeDefaultConfig() {
       note: '设计稿尺寸：PC(1920) + Mobile(750)。mobileMinWidth(如375)由系数表间接兜底。',
     },
     responsive: {
+      mobileProfilePreset: 'auto',
       mobileClampMode: 'auto',
       smallMobileThreshold: 400,
       dualClampMinWidth: 500,
