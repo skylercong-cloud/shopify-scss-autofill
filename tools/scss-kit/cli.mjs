@@ -111,6 +111,66 @@ function getAutofill(cfg) {
   }
 }
 
+function getResponsive(cfg) {
+  const modeRaw = cfg?.responsive?.mobileClampMode ?? 'auto'
+  const mode = String(modeRaw)
+  const smallMobileThreshold = Number(
+    cfg?.responsive?.smallMobileThreshold ?? 400
+  )
+  const dualClampMinWidth = Number(cfg?.responsive?.dualClampMinWidth ?? 500)
+  const dualClampMaxWidth = Number(cfg?.responsive?.dualClampMaxWidth ?? 600)
+  const mobileWidth = Number(cfg?.design?.mobileWidth ?? 750)
+
+  if (!['auto', 'min-first', 'max-first', 'dual-bound'].includes(mode)) {
+    throw new Error(
+      `Invalid responsive.mobileClampMode: ${mode}. Expected one of: auto|min-first|max-first|dual-bound`
+    )
+  }
+  if (!Number.isFinite(smallMobileThreshold) || smallMobileThreshold <= 0) {
+    throw new Error(
+      `Invalid responsive.smallMobileThreshold: ${String(
+        cfg?.responsive?.smallMobileThreshold
+      )}. Expected a positive number`
+    )
+  }
+  if (!Number.isFinite(dualClampMinWidth) || dualClampMinWidth <= 0) {
+    throw new Error(
+      `Invalid responsive.dualClampMinWidth: ${String(
+        cfg?.responsive?.dualClampMinWidth
+      )}. Expected a positive number`
+    )
+  }
+  if (!Number.isFinite(dualClampMaxWidth) || dualClampMaxWidth <= 0) {
+    throw new Error(
+      `Invalid responsive.dualClampMaxWidth: ${String(
+        cfg?.responsive?.dualClampMaxWidth
+      )}. Expected a positive number`
+    )
+  }
+  if (dualClampMinWidth > dualClampMaxWidth) {
+    throw new Error(
+      `Invalid responsive dual clamp range: dualClampMinWidth (${dualClampMinWidth}) must be <= dualClampMaxWidth (${dualClampMaxWidth})`
+    )
+  }
+
+  const resolvedMobileClampMode =
+    mode === 'auto'
+      ? mobileWidth < smallMobileThreshold
+        ? 'max-first'
+        : mobileWidth >= dualClampMinWidth && mobileWidth <= dualClampMaxWidth
+          ? 'dual-bound'
+          : 'min-first'
+      : mode
+
+  return {
+    mode,
+    resolvedMobileClampMode,
+    smallMobileThreshold,
+    dualClampMinWidth,
+    dualClampMaxWidth,
+  }
+}
+
 function walkScssFiles(dirAbs, out) {
   if (!fs.existsSync(dirAbs)) return
   const entries = fs.readdirSync(dirAbs, { withFileTypes: true })
@@ -223,7 +283,7 @@ function replaceAutofillCalls(value, { ns, name, vwName }) {
     const mobile = args[1]
     const desktopType = args[2]
     const mobileType = args.length >= 4 ? args[3] : desktopType
-    return `${ns}.clamp_mb(${mobile}, ${ns}.min_px(${mobile}, ${mobileType}, mobile))`
+    return `${ns}.resp_mb(${mobile}, ${mobileType})`
   })
 
   const vwToken = `${ns}.${vwName}(`
@@ -572,8 +632,13 @@ function toScssMap(obj) {
 function generateResponsiveScss(cfg) {
   const mobileMap = toScssMap(cfg.coefficients.mobile)
   const desktopMap = toScssMap(cfg.coefficients.desktop)
+  const mobileMaxCoefMap = toScssMap(cfg.maxCoefficients?.mobile ?? {})
+  const desktopMaxCoefMap = toScssMap(cfg.maxCoefficients?.desktop ?? {})
   const mobileFloorMap = toScssMap(cfg.floors?.mobile ?? {})
   const desktopFloorMap = toScssMap(cfg.floors?.desktop ?? {})
+  const mobileCeilingMap = toScssMap(cfg.ceilings?.mobile ?? {})
+  const desktopCeilingMap = toScssMap(cfg.ceilings?.desktop ?? {})
+  const responsive = getResponsive(cfg)
 
   return `@use "sass:map";
 @use "sass:math";
@@ -590,9 +655,19 @@ $coef-mobile: ${mobileMap};
 
 $coef-desktop: ${desktopMap};
 
+$max-coef-mobile: ${mobileMaxCoefMap};
+
+$max-coef-desktop: ${desktopMaxCoefMap};
+
 $floor-mobile: ${mobileFloorMap};
 
 $floor-desktop: ${desktopFloorMap};
+
+$ceiling-mobile: ${mobileCeilingMap};
+
+$ceiling-desktop: ${desktopCeilingMap};
+
+$mobile-clamp-mode: ${responsive.resolvedMobileClampMode};
 
 @function _to-px($value) {
   @return if(math.is-unitless($value), $value * 1px, $value);
@@ -619,8 +694,24 @@ $floor-desktop: ${desktopFloorMap};
   @error "Unknown coef type: #{$type}";
 }
 
+@function max_coef($type, $range: mobile) {
+  $table: if($range == desktop, $max-coef-desktop, $max-coef-mobile);
+  @if map.has-key($table, $type) {
+    @return map.get($table, $type);
+  }
+  @return null;
+}
+
 @function _floor($type, $range: mobile) {
   $table: if($range == desktop, $floor-desktop, $floor-mobile);
+  @if map.has-key($table, $type) {
+    @return map.get($table, $type);
+  }
+  @return null;
+}
+
+@function _ceiling($type, $range: mobile) {
+  $table: if($range == desktop, $ceiling-desktop, $ceiling-mobile);
   @if map.has-key($table, $type) {
     @return map.get($table, $type);
   }
@@ -651,6 +742,50 @@ $floor-desktop: ${desktopFloorMap};
   @return $min;
 }
 
+// 根据设计稿 px + 系数推导 clamp() 最大值：
+// - 优先使用 max-coef（乘法放大）：min(design * maxCoef, ceiling)
+// - 若未配置 max-coef，则回退兼容旧规则：min(design / coef, ceiling)
+// $type 可传命名类型（字符串）或直接传数字系数。
+@function max_px($value, $type, $range: mobile, $override-coef: null, $override-ceiling: null) {
+  $v: _to-px($value);
+
+  @if meta.type-of($type) == number {
+    @if $type <= 0 {
+      @error "max_px() expects positive coefficient when type is number";
+    }
+    $max: $v * $type;
+    @if $override-ceiling != null {
+      @return math.min($max, _to-px($override-ceiling));
+    }
+    @return $max;
+  }
+
+  $mc: if($override-coef == null, max_coef($type, $range), $override-coef);
+  @if $mc != null {
+    @if $mc <= 0 {
+      @error "max_px() expects positive max coefficient for type: #{$type}";
+    }
+    $max: $v * $mc;
+    $ceil: if($override-ceiling != null, _to-px($override-ceiling), _ceiling($type, $range));
+    @if $ceil {
+      @return math.min($max, $ceil);
+    }
+    @return $max;
+  }
+
+  $c: coef($type, $range);
+  @if $c <= 0 {
+    @error "max_px() expects positive coefficient for fallback type: #{$type}";
+  }
+  $max: math.div($v, $c);
+
+  $ceil: if($override-ceiling != null, _to-px($override-ceiling), _ceiling($type, $range));
+  @if $ceil {
+    @return math.min($max, $ceil);
+  }
+  @return $max;
+}
+
 // 生成桌面段 clamp：min + calc(pc * var(--px-to-vw)) + pc
 @function clamp_pc($pc, $min) {
   $v: _to-px($pc);
@@ -658,11 +793,25 @@ $floor-desktop: ${desktopFloorMap};
   @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw)), #{$v});
 }
 
-// 生成移动段 clamp：min + calc(mobile * var(--px-to-vw-mb)) + mobile
-@function clamp_mb($mobile, $min) {
-  $v: _to-px($mobile);
+// 生成移动段 clamp：min + calc(mobile * var(--px-to-vw-mb)) + max
+@function clamp_mb($mobile, $min, $max: null) {
+  $v: if($max == null, _to-px($mobile), _to-px($max));
   $n: _to-num($mobile);
   @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw-mb)), #{$v});
+}
+
+// 移动段响应式输出策略：
+// - min-first: 传统逻辑（按系数推导 min）
+// - max-first: 小设计稿逻辑（设计值作为 min，按系数推导 max）
+// - dual-bound: 中等设计稿（500-600）逻辑，双向边界 clamp(min, fluid, max)
+@function resp_mb($mobile, $type) {
+  @if $mobile-clamp-mode == max-first {
+    @return clamp_mb($mobile, $mobile, max_px($mobile, $type, mobile));
+  }
+  @if $mobile-clamp-mode == dual-bound {
+    @return clamp_mb($mobile, min_px($mobile, $type, mobile), max_px($mobile, $type, mobile));
+  }
+  @return clamp_mb($mobile, min_px($mobile, $type, mobile));
 }
 
 // 直接输出 PC 段 vw，并用设计稿 px 做上限兜底。

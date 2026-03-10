@@ -264,6 +264,10 @@ p { margin: 8px 0 0; }
   gap: 18px;
 }
 
+.grid .card {
+  text-align: center;
+}
+
 .card {
   grid-column: span 12;
   padding: 20px;

@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0] - 2026-03-10
+
+### Added
+
+- Default scaffold config now includes:
+  - `responsive.mobileClampMode: "auto"`
+  - `responsive.smallMobileThreshold: 400`
+  - `responsive.dualClampMinWidth: 500`
+  - `responsive.dualClampMaxWidth: 600`
+  - `maxCoefficients.mobile` presets for common text/price types
+  - `ceilings.mobile` presets to cap max-first growth on small canvases
+
+### Changed
+
+- Updated default `design.note` to clarify that mobile fallback behavior (small-canvas max-first and medium-canvas dual-bound) is controlled by responsive strategy config.
+
 ## [0.3.0] - 2026-03-06
 
 ### Added

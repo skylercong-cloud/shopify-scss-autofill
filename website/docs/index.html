@@ -803,7 +803,7 @@
                 <div class="cell">
                   业务主函数（字体/需兜底）：PC 输出
                   <span class="code">clamp</span>；Mobile 由扫描器生成
-                  <span class="code">clamp_mb(...)</span> 覆盖；第 3/4
+                  <span class="code">resp_mb(...)</span> 覆盖；第 3/4
                   参数分别控制 PC/Mobile type。
                 </div>
               </div>
@@ -824,6 +824,18 @@
                   计算 clamp 最小值：命名 type 按
                   <span class="code">max(design * coef, floor)</span>，数字 type
                   直接按系数计算。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">
+                  r.max_px(value, type[, range, overrideCoef, overrideCeiling])
+                </div>
+                <div class="cell">
+                  计算 clamp 最大值：优先按
+                  <span class="code">min(design * maxCoef, ceiling)</span
+                  >；未配置
+                  <span class="code">maxCoefficients</span> 时回退兼容旧规则
+                  <span class="code">min(design / coef, ceiling)</span>。
                 </div>
               </div>
               <div class="row">
@@ -849,11 +861,23 @@
                 </div>
               </div>
               <div class="row">
-                <div class="cell cmd">r.clamp_mb(mobile, min)</div>
+                <div class="cell cmd">r.clamp_mb(mobile, min[, max])</div>
                 <div class="cell">
-                  生成移动端 clamp：<span class="code"
-                    >clamp(min, calc(mobile * var(--px-to-vw-mb)), mobile)</span
-                  >
+                  生成移动端 clamp：
+                  <span class="code">max</span> 为空时使用
+                  <span class="code">clamp(min, fluid, mobile)</span>；传入
+                  <span class="code">max</span> 时使用
+                  <span class="code">clamp(mobile, fluid, max)</span>。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r.resp_mb(mobile, type)</div>
+                <div class="cell">
+                  移动端策略入口：按
+                  <span class="code">responsive.mobileClampMode</span> 选择
+                  <span class="code">min-first</span> 或
+                  <span class="code">max-first</span> 或
+                  <span class="code">dual-bound</span>。
                 </div>
               </div>
               <div class="row">
@@ -951,7 +975,51 @@
               </div>
               <div class="row">
                 <div class="cell cmd">design.mobileWidth</div>
-                <div class="cell">移动端设计稿宽度（默认按 750 体系）</div>
+                <div class="cell">
+                  移动端设计稿宽度；当小于
+                  <span class="code">responsive.smallMobileThreshold</span>
+                  且模式为 <span class="code">auto</span> 时，移动端切
+                  <span class="code">max-first</span>；当落在
+                  <span class="code"
+                    >responsive.dualClampMinWidth ~
+                    responsive.dualClampMaxWidth</span
+                  >
+                  且模式为 <span class="code">auto</span> 时，移动端切
+                  <span class="code">dual-bound</span>。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">responsive.mobileClampMode</div>
+                <div class="cell">
+                  移动端 clamp 策略：
+                  <span class="code"
+                    >auto | min-first | max-first | dual-bound</span
+                  >。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">responsive.smallMobileThreshold</div>
+                <div class="cell">
+                  小稿阈值（默认 400）；
+                  <span class="code">auto</span> 模式用它判断是否切换到
+                  <span class="code">max-first</span>。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">responsive.dualClampMinWidth</div>
+                <div class="cell">
+                  中稿双向边界下限（默认 500）；
+                  <span class="code">auto</span> 模式用于判断是否切换到
+                  <span class="code">dual-bound</span>。
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">responsive.dualClampMaxWidth</div>
+                <div class="cell">
+                  中稿双向边界上限（默认 600）；与
+                  <span class="code">dualClampMinWidth</span> 组成
+                  <span class="code">500~600</span> 区间。
+                </div>
               </div>
               <div class="row">
                 <div class="cell cmd">design.note</div>
@@ -1041,6 +1109,26 @@
                 <div class="cell">
                   PC 端绝对兜底值表（key 是 type，value 是 px 字符串）
                 </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">maxCoefficients.mobile</div>
+                <div class="cell">
+                  移动端 max 系数表（max-first 时用于放大设计值）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">maxCoefficients.desktop</div>
+                <div class="cell">PC 端 max 系数表（预留，默认可为空）</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">ceilings.mobile</div>
+                <div class="cell">
+                  移动端绝对上限表（与 max 系数共同限制最大值）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">ceilings.desktop</div>
+                <div class="cell">PC 端绝对上限表（预留，默认可为空）</div>
               </div>
             </div>
           </section>

@@ -90,11 +90,34 @@
 
 ### 由 `r.resp` / `r.vw` 间接使用（一般不直接写）
 
+- 设计稿策略（新增）
+  - `responsive.mobileClampMode`: `auto | min-first | max-first | dual-bound`
+    - `auto`（默认）：
+      - 当 `design.mobileWidth < responsive.smallMobileThreshold`（默认 400）时，移动端走 `max-first`。
+      - 当 `design.mobileWidth` 落在 `responsive.dualClampMinWidth ~ responsive.dualClampMaxWidth`（默认 `500~600`）时，移动端走 `dual-bound`。
+      - 其余情况走 `min-first`。
+    - `min-first`：沿用原逻辑，`clamp(min, fluid, design)`，`min` 由 `min_px()` 推导。
+    - `max-first`：小稿逻辑，`clamp(design, fluid, max)`，`max` 由 `max_px()` 推导。
+    - `dual-bound`：中稿逻辑，`clamp(min, fluid, max)`，同一条公式同时约束 375 侧最小值和 750+ 侧最大值。
+  - `responsive.smallMobileThreshold`: 小稿阈值，默认 `400`。
+  - `responsive.dualClampMinWidth`: 双向边界模式的下限设计稿宽度，默认 `500`。
+  - `responsive.dualClampMaxWidth`: 双向边界模式的上限设计稿宽度，默认 `600`。
+  - 当 `mobileClampMode=auto` 且 `design.mobileWidth < 400` 时，推荐在 `maxCoefficients.mobile` + `ceilings.mobile` 中配置“放大系数 + 绝对上限”。
+  - 当 `mobileClampMode=auto` 且 `design.mobileWidth` 在 `500~600` 时，推荐同时配置 `floors.mobile` 与 `maxCoefficients.mobile + ceilings.mobile`，形成双向边界。
+
 - `r.min_px($value, $type, $range: mobile, $override-coef: null, $override-floor: null)`
   - 用途：计算 clamp 最小值。
   - 规则：
     - 命名 type：按 `max(designPx * coef(type), floor(type))` 计算（floor 来自 `floors.mobile/desktop`）。
     - 数字 type：可直接传系数（例如 `0.6`），此时跳过 type 表查询；可选叠加 `override-floor`。
+
+- `r.max_px($value, $type, $range: mobile, $override-coef: null, $override-ceiling: null)`
+  - 用途：计算 clamp 最大值。
+  - 规则：
+    - 命名 type：
+      - 若配置了 `maxCoefficients`：按 `min(designPx * maxCoef(type), ceiling(type))` 计算。
+      - 若未配置 `maxCoefficients`：回退兼容旧规则 `min(designPx / coef(type), ceiling(type))`。
+    - 数字 type：按 `design * coef` 计算；可选叠加 `override-ceiling`。
 
 - `r.coef($type, $range: mobile)`
   - 用途：读取 `coefficients.mobile/desktop` 中对应 type 的系数。
@@ -106,9 +129,12 @@
   - 用途：生成 PC clamp。
   - 结构：`clamp($min, calc($pc * var(--px-to-vw)), $pc)`。
 
-- `r.clamp_mb($mobile, $min)`
+- `r.clamp_mb($mobile, $min, $max: null)`
   - 用途：生成移动端 clamp。
-  - 结构：`clamp($min, calc($mobile * var(--px-to-vw-mb)), $mobile)`。
+  - 结构：`clamp($min, calc($mobile * var(--px-to-vw-mb)), $max)`；当 `$max` 为空时回退到 `$mobile`。
+
+- `r.resp_mb($mobile, $type)`
+  - 用途：按 `mobileClampMode` 在移动端选择 `min-first / max-first / dual-bound` 策略。
 
 - `r.vw_pc($pc)`
   - 用途：生成 PC 端 `vw` 并带上限。

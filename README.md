@@ -6,6 +6,14 @@ Tooling for a stable Shopify Theme Kit workflow:
 - Compile to `assets/*.css` (safe mode; avoids overwriting unknown legacy CSS)
 - Auto-generate **per-entry** mobile overrides from `r.resp(pc, mobile, desktopType[, mobileType])`
 - Use `r.vw(pc, mobile)` for spacing-first responsive values (mobile emits pure `vw`)
+- Support mobile clamp strategy switch (`responsive.mobileClampMode`):
+  - `auto` (default):
+    - when `design.mobileWidth < 400`, mobile uses `max-first` (`clamp(design, fluid, max)`)
+    - when `design.mobileWidth` is within `500~600`, mobile uses `dual-bound` (`clamp(min, fluid, max)`)
+    - otherwise mobile uses `min-first` (`clamp(min, fluid, design)`)
+  - `min-first`: keep classic `clamp(min, fluid, design)`
+  - `max-first`: force small-canvas growth with `maxCoefficients` + `ceilings`
+  - `dual-bound`: constrain both low-end and high-end growth with one clamp
 - Upload via Theme Kit `theme watch`
 
 ## Use it (recommended)

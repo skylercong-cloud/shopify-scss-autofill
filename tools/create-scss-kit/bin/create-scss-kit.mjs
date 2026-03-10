@@ -87,6 +87,12 @@ function makeDefaultConfig() {
       mobileWidth: 750,
       note: '设计稿尺寸：PC(1920) + Mobile(750)。mobileMinWidth(如375)由系数表间接兜底。',
     },
+    responsive: {
+      mobileClampMode: 'auto',
+      smallMobileThreshold: 400,
+      dualClampMinWidth: 500,
+      dualClampMaxWidth: 600,
+    },
     paths: {
       scssSrcDir: 'src/styles',
       cssOutDir: 'assets',
@@ -154,6 +160,21 @@ function makeDefaultConfig() {
         breadcrumb: 0.7,
       },
     },
+    maxCoefficients: {
+      mobile: {
+        h1: 1.5,
+        h2: 1.5,
+        h3: 1.5,
+        h4: 1.5,
+        body: 1.3,
+        small: 1.3,
+        'button-text': 1.25,
+        'form-input': 1.25,
+        'price-large': 1.4,
+        badge: 1.3,
+      },
+      desktop: {},
+    },
     floors: {
       mobile: {
         h1: '24px',
@@ -193,6 +214,21 @@ function makeDefaultConfig() {
         badge: '12px',
         breadcrumb: '12px',
       },
+    },
+    ceilings: {
+      mobile: {
+        h1: '48px',
+        h2: '42px',
+        h3: '36px',
+        h4: '30px',
+        body: '18px',
+        small: '16px',
+        'button-text': '20px',
+        'form-input': '20px',
+        'price-large': '40px',
+        badge: '14px',
+      },
+      desktop: {},
     },
   }
 }

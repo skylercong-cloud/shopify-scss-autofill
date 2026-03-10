@@ -1,13 +1,15 @@
 # scss-kit 维护备忘（持续迭代）
 
-更新时间：2026-02-13
+更新时间：2026-03-10
 
 这份文档的目的：把 scss-kit 的“关键约束 / 设计决策 / 发布要点”固化下来，方便我们后续持续更新、迭代而不走回头路。
 
 ## 核心目标
 
 - 写 SCSS（`src/styles`）→ 自动编译为 CSS（`assets/*.css`）→ ThemeKit (`theme watch`) 自动上传 → 刷新即可看到效果。
-- 响应式：PC(1920) + Mobile(750) 双设计稿，通过 `r.resp(pc, mobile, desktopType[, mobileType])` 埋点 + 自动生成移动端覆盖。
+- 响应式：PC + Mobile 双设计稿，通过 `r.resp(pc, mobile, desktopType[, mobileType])` 埋点 + 自动生成移动端覆盖。
+- 小稿策略：当 `design.mobileWidth < responsive.smallMobileThreshold`（默认 `400`）时，`mobileClampMode=auto` 会切到 `max-first`，让小稿按上限增长而不是过早封顶。
+- 中稿策略：当 `design.mobileWidth` 落在 `responsive.dualClampMinWidth ~ responsive.dualClampMaxWidth`（默认 `500~600`）时，`mobileClampMode=auto` 会切到 `dual-bound`，用一条 `clamp(min, fluid, max)` 同时约束小屏下限与大屏上限。
 
 ## 关键约束（不要破坏）
 
@@ -29,6 +31,7 @@
 
 - `node tools/scss-kit/cli.mjs responsive:generate <entry.scss>`
   - 只扫描该入口文件内的 `r.resp()`，生成该入口的 per-entry 覆盖文件
+  - 移动端覆盖通过 `r.resp_mb(...)` 自动选择 `min-first / max-first / dual-bound`
 
 - `node tools/scss-kit/cli.mjs responsive:generate:entries`
   - 按 `scss-kit.config.json` 的 `autofill.entries` 批量生成
@@ -52,8 +55,6 @@
 
 关键点：
 
-关键点：
-
 - 模板必须随包发布：`tools/create-scss-kit/template/tools/scss-kit/*`
 - 为避免模板漂移，`create-scss-kit` 提供 `prepack` 自动同步脚本：
   - 见 [tools/create-scss-kit/scripts/sync-template.mjs](../create-scss-kit/scripts/sync-template.mjs)
@@ -62,6 +63,7 @@
 
 - 每次改动 scss-kit：
   - 同步更新文档（README / docs/README / 本文件）
+  - 若改动 `responsive`/`maxCoefficients`/`ceilings` 语义，必须同步更新 website docs 与 CHANGELOG
   - 跑一次最小冒烟：`cli.mjs doctor`、`responsive:generate`、`css:watch`（可选）
 - 每次发布 create-scss-kit：
   - 确认 `npm pack` 包内包含 `template/`（以及模板下的 `cli.mjs` 等关键文件）

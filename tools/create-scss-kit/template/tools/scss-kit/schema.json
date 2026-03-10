@@ -13,6 +13,18 @@
         "note": {"type": "string"}
       }
     },
+    "responsive": {
+      "type": "object",
+      "properties": {
+        "mobileClampMode": {
+          "type": "string",
+          "enum": ["auto", "min-first", "max-first", "dual-bound"]
+        },
+        "smallMobileThreshold": {"type": "integer", "minimum": 1},
+        "dualClampMinWidth": {"type": "integer", "minimum": 1},
+        "dualClampMaxWidth": {"type": "integer", "minimum": 1}
+      }
+    },
     "paths": {
       "type": "object",
       "required": ["scssSrcDir", "cssOutDir"],
@@ -49,7 +61,21 @@
         "desktop": {"type": "object", "additionalProperties": {"type": "number"}}
       }
     },
+    "maxCoefficients": {
+      "type": "object",
+      "properties": {
+        "mobile": {"type": "object", "additionalProperties": {"type": "number"}},
+        "desktop": {"type": "object", "additionalProperties": {"type": "number"}}
+      }
+    },
     "floors": {
+      "type": "object",
+      "properties": {
+        "mobile": {"type": "object", "additionalProperties": {"type": "string"}},
+        "desktop": {"type": "object", "additionalProperties": {"type": "string"}}
+      }
+    },
+    "ceilings": {
       "type": "object",
       "properties": {
         "mobile": {"type": "object", "additionalProperties": {"type": "string"}},
