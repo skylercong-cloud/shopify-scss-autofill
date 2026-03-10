@@ -62,7 +62,7 @@
 
             <div class="toc__title">原理</div>
             <a class="toc__link" href="#safety">安全策略</a>
-            <a class="toc__link" href="#mobile-min">最小值规则</a>
+            <a class="toc__link" href="#mobile-min">最值规则</a>
 
             <div class="toc__title">参考</div>
             <a class="toc__link" href="#commands">指令大全</a>
@@ -707,6 +707,110 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
                 <div class="cell">0.65</div>
                 <div class="cell">11px</div>
                 <div class="cell">breadcrumb</div>
+              </div>
+            </div>
+
+            <h3 class="doc-subhead">移动端（590 设计稿 / dual-bound）</h3>
+            <p class="muted">
+              590 设计稿建议使用双向边界：最小侧沿用
+              <span class="code">coefficients + floors</span>，最大侧通过
+              <span class="code">maxCoefficients + ceilings</span> 限制。
+            </p>
+            <div class="table table--four">
+              <div class="row">
+                <div class="cell cmd">元素类型</div>
+                <div class="cell">最小侧（coef / floor）</div>
+                <div class="cell">最大侧（maxCoef / ceiling）</div>
+                <div class="cell">说明</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H1</div>
+                <div class="cell">0.52 / 24px</div>
+                <div class="cell">1.5 / 48px</div>
+                <div class="cell">
+                  标题在小屏不低于可读阈值，在大屏不过度放大
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H2</div>
+                <div class="cell">0.55 / 20px</div>
+                <div class="cell">1.5 / 42px</div>
+                <div class="cell">次级标题保持层级差异</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">Body</div>
+                <div class="cell">0.6 / 14px</div>
+                <div class="cell">1.3 / 18px</div>
+                <div class="cell">正文在 590 下兼顾阅读与布局密度</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">按钮文字</div>
+                <div class="cell">0.6 / 14px</div>
+                <div class="cell">1.25 / 20px</div>
+                <div class="cell">交互文字保持点击可读性</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">表单输入</div>
+                <div class="cell">0.6 / 16px</div>
+                <div class="cell">1.25 / 20px</div>
+                <div class="cell">保留 iOS 16px 下限，同时限制上限</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">价格（大）</div>
+                <div class="cell">0.5 / 22px</div>
+                <div class="cell">1.4 / 40px</div>
+                <div class="cell">价格强调与版面平衡兼顾</div>
+              </div>
+            </div>
+
+            <h3 class="doc-subhead">移动端（375 设计稿 / max-first）</h3>
+            <p class="muted">
+              375 设计稿建议以设计值为下限（
+              <span class="code">max-first</span>），避免小稿在真实设备上过小；
+              上限由 <span class="code">maxCoefficients + ceilings</span> 控制。
+            </p>
+            <div class="table table--four">
+              <div class="row">
+                <div class="cell cmd">元素类型</div>
+                <div class="cell">设计值下限（mobile）</div>
+                <div class="cell">最大侧（maxCoef / ceiling）</div>
+                <div class="cell">说明</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H1</div>
+                <div class="cell">26px</div>
+                <div class="cell">1.5 / 48px</div>
+                <div class="cell">最小机型先保证标题可读，再允许受控放大</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">H2</div>
+                <div class="cell">22px</div>
+                <div class="cell">1.5 / 42px</div>
+                <div class="cell">维持信息层级，避免标题挤压正文</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">Body</div>
+                <div class="cell">16px</div>
+                <div class="cell">1.3 / 18px</div>
+                <div class="cell">正文优先可读性，放大幅度受限</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">按钮文字</div>
+                <div class="cell">14px</div>
+                <div class="cell">1.25 / 20px</div>
+                <div class="cell">交互文案在小屏不缩水</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">表单输入</div>
+                <div class="cell">16px</div>
+                <div class="cell">1.25 / 20px</div>
+                <div class="cell">避免 iOS 自动缩放，同时保持上限控制</div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">价格（大）</div>
+                <div class="cell">24px</div>
+                <div class="cell">1.4 / 40px</div>
+                <div class="cell">小屏保证价格强调，大屏不过分膨胀</div>
               </div>
             </div>
           </section>
