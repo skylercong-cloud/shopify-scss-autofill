@@ -569,3 +569,19 @@ p { margin: 8px 0 0; }
     minmax(220px, 1.45fr);
   min-width: 860px;
 }
+
+/* 6-column data tables used by 590/375 complete config sections */
+.table.table--six {
+  overflow-x: auto;
+}
+
+.table.table--six .row {
+  grid-template-columns:
+    minmax(190px, 1.35fr)
+    minmax(110px, 0.8fr)
+    minmax(130px, 0.9fr)
+    minmax(120px, 0.85fr)
+    minmax(120px, 0.85fr)
+    minmax(120px, 0.85fr);
+  min-width: 980px;
+}
