@@ -421,6 +421,8 @@ function replaceAutofillCalls(value, { ns, name, vwName }) {
     const mobile = args[1]
     const desktopType = args[2]
     const mobileType = args.length >= 4 ? args[3] : desktopType
+    // type=0 means no clamp bounds (pure fluid). Use vw_mb instead of resp_mb(val, 0).
+    if (mobileType.trim() === '0') return `${ns}.vw_mb(${mobile})`
     return `${ns}.resp_mb(${mobile}, ${mobileType})`
   })
 
