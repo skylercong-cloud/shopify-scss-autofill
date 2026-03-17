@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
+## [0.5.0] - 2026-03-17
+
+### Added
+
+- Added `r.re($pc-val, $mobile-val: null)` function for non-dimension responsive values (e.g. `color`, `display`, `background`). PC returns first arg; autofill scanner emits mobile override with second arg directly. Usage: `color: r.re(#fff, #000);`
+- Added `vw_pc_raw($pc)` helper: outputs `calc(n * var(--px-to-vw))` without an upper-bound cap (contrast with `vw_pc` which adds `min(..., px)`).
+
+### Fixed
+
+- **Comment-only CSS blocks**: `css-watch-safe.mjs` now post-processes compiled CSS to remove selector blocks that contain only CSS comments (`/* */`) and no declarations, eliminating spurious empty rules in output CSS.
+- **Duplicate `--px-to-vw-mb` variable**: Removed per-selector `--px-to-vw-mb` declarations from autofill output. `:root { --px-to-vw-mb }` in the `@media` block is sufficient for all descendants.
+
+### Changed
+
+- `dev:theme:auto` script now runs `scss-kit:generate && scss-kit:responsive:generate` before starting watchers, so config changes take effect immediately on project start.
+
 ## [Unreleased]
 
 ### Added

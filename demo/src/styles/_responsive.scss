@@ -223,6 +223,12 @@ $mobile-clamp-mode: min-first;
   @return min(calc(#{$n} * var(--px-to-vw)), #{$v});
 }
 
+// 直接输出 PC 段纯 vw（无上限兜底）。
+@function vw_pc_raw($pc) {
+  $n: _to-num($pc);
+  @return calc(#{$n} * var(--px-to-vw));
+}
+
 // 直接输出移动段 vw（无 clamp）。
 @function vw_mb($mobile) {
   $n: _to-num($mobile);
@@ -248,4 +254,13 @@ $mobile-clamp-mode: min-first;
     @error "resp() expects a number (px) for pc value";
   }
   @return clamp_pc($pc, min_px($pc, $type, desktop));
+}
+
+// re(): passthrough for non-dimension responsive values (color, display, background, etc.)
+// - PC: returns first arg unchanged.
+// - Mobile: scss-kit autofill scanner reads second arg and emits mobile override directly.
+// Usage:  color: r.re(#fff, #000);   → PC: #fff, Mobile override: #000
+//         display: r.re(flex, none);
+@function re($pc-val, $mobile-val: null) {
+  @return $pc-val;
 }

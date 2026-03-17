@@ -65,6 +65,53 @@ function toPosix(p) {
   return p.replaceAll('\\', '/')
 }
 
+/**
+ * Remove CSS rule blocks (non-@-rules) that contain no declarations —
+ * only CSS comments and/or whitespace. Sass preserves /* *\/ comments
+ * in output; this post-process step prevents empty selector blocks from
+ * cluttering the compiled CSS.
+ *
+ * Works on Sass --style=expanded output (flat, no nesting inside rules).
+ * @param {string} cssText
+ * @returns {string}
+ */
+function removeCommentOnlyBlocks(cssText) {
+  const lines = cssText.split(/\r?\n/)
+  const result = []
+  let i = 0
+  while (i < lines.length) {
+    const line = lines[i]
+    const trimmed = line.trimStart()
+    // Detect a rule opener: line ends with '{' and is NOT an @-rule
+    if (!trimmed.startsWith('@') && trimmed.endsWith('{')) {
+      const block = [line]
+      let depth =
+        (line.match(/\{/g) || []).length - (line.match(/\}/g) || []).length
+      i++
+      while (i < lines.length && depth > 0) {
+        const bl = lines[i]
+        block.push(bl)
+        depth += (bl.match(/\{/g) || []).length
+        depth -= (bl.match(/\}/g) || []).length
+        i++
+      }
+      // Check whether the body has any actual declarations
+      // (lines that are non-empty after stripping CSS comments)
+      const body = block.slice(1, block.length - 1)
+      const hasDecl = body.some((l) => {
+        const stripped = l.replace(/\/\*(?:[^*]|\*(?!\/))*\*\//g, '').trim()
+        return stripped.length > 0
+      })
+      if (hasDecl) result.push(...block)
+      // else: block contains only comments — drop it
+    } else {
+      result.push(line)
+      i++
+    }
+  }
+  return result.join('\n').replace(/\n{3,}/g, '\n\n')
+}
+
 function syncOne(tmpCssAbs) {
   const relFromOut = path.relative(OUT_DIR, tmpCssAbs)
   const targetAbs = path.join(ASSETS_DIR, relFromOut)
@@ -98,7 +145,8 @@ function syncOne(tmpCssAbs) {
   }
 
   const tmpText = readText(tmpCssAbs)
-  const nextText = withMarker(tmpText, sourceRel)
+  const cleanedText = removeCommentOnlyBlocks(tmpText)
+  const nextText = withMarker(cleanedText, sourceRel)
 
   if (!fs.existsSync(targetAbs)) {
     ensureDir(path.dirname(targetAbs))
