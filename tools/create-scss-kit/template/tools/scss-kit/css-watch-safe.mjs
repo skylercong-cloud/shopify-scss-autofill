@@ -66,12 +66,35 @@ function toPosix(p) {
 }
 
 /**
- * Remove CSS rule blocks (non-@-rules) that contain no declarations —
- * only CSS comments and/or whitespace. Sass preserves /* *\/ comments
- * in output; this post-process step prevents empty selector blocks from
- * cluttering the compiled CSS.
+ * Collect a balanced { } block starting at lines[startIdx].
+ * Returns the slice of lines from opener to closer (inclusive).
+ * @param {string[]} lines
+ * @param {number} startIdx
+ * @returns {string[]}
+ */
+function collectBlock(lines, startIdx) {
+  const block = [lines[startIdx]]
+  let depth =
+    (lines[startIdx].match(/\{/g) || []).length -
+    (lines[startIdx].match(/\}/g) || []).length
+  let i = startIdx + 1
+  while (i < lines.length && depth > 0) {
+    const l = lines[i]
+    block.push(l)
+    depth += (l.match(/\{/g) || []).length
+    depth -= (l.match(/\}/g) || []).length
+    i++
+  }
+  return block
+}
+
+/**
+ * Process rule blocks that contain ONLY CSS comments (no declarations).
+ * Instead of dropping them, the comments are extracted and emitted as
+ * standalone lines before the following rule — preserving intent without
+ * generating empty selector blocks in the output.
  *
- * Works on Sass --style=expanded output (flat, no nesting inside rules).
+ * Works on Sass --style=expanded output.
  * @param {string} cssText
  * @returns {string}
  */
@@ -82,28 +105,23 @@ function removeCommentOnlyBlocks(cssText) {
   while (i < lines.length) {
     const line = lines[i]
     const trimmed = line.trimStart()
-    // Detect a rule opener: line ends with '{' and is NOT an @-rule
+    // Detect a rule opener: ends with '{' and is NOT an @-rule
     if (!trimmed.startsWith('@') && trimmed.endsWith('{')) {
-      const block = [line]
-      let depth =
-        (line.match(/\{/g) || []).length - (line.match(/\}/g) || []).length
-      i++
-      while (i < lines.length && depth > 0) {
-        const bl = lines[i]
-        block.push(bl)
-        depth += (bl.match(/\{/g) || []).length
-        depth -= (bl.match(/\}/g) || []).length
-        i++
-      }
-      // Check whether the body has any actual declarations
-      // (lines that are non-empty after stripping CSS comments)
+      const block = collectBlock(lines, i)
+      i += block.length
       const body = block.slice(1, block.length - 1)
-      const hasDecl = body.some((l) => {
-        const stripped = l.replace(/\/\*(?:[^*]|\*(?!\/))*\*\//g, '').trim()
-        return stripped.length > 0
-      })
-      if (hasDecl) result.push(...block)
-      // else: block contains only comments — drop it
+      const hasDecl = body.some(
+        (l) => l.replace(/\/\*(?:[^*]|\*(?!\/))*\*\//g, '').trim().length > 0
+      )
+      if (hasDecl) {
+        result.push(...block)
+      } else {
+        // Comment-only block: lift comments out as standalone lines
+        for (const bl of body) {
+          const t = bl.trim()
+          if (t.length > 0) result.push(t)
+        }
+      }
     } else {
       result.push(line)
       i++
@@ -112,7 +130,117 @@ function removeCommentOnlyBlocks(cssText) {
   return result.join('\n').replace(/\n{3,}/g, '\n\n')
 }
 
-function syncOne(tmpCssAbs) {
+/**
+ * Hoist --px-to-vw and --px-to-vw-mb :root declarations to the top of the
+ * file (right after the scss-kit:managed marker / @charset lines).
+ *
+ * The --px-to-vw block is a top-level :root { ... }.
+ * The --px-to-vw-mb block is a :root { ... } nested inside a @media rule;
+ * we extract it and place a matching @media{ :root{ --px-to-vw-mb } } at the
+ * top, then remove it from the original @media block (the block is dropped
+ * entirely if it has no remaining rules).
+ * @param {string} cssText
+ * @returns {string}
+ */
+function hoistCssVars(cssText) {
+  const lines = cssText.split(/\r?\n/)
+
+  const pcVarLines = []     // lines of :root { --px-to-vw }
+  let mbMediaHeader = ''    // @media header for the --px-to-vw-mb block
+  const mbVarLines = []     // lines of :root { --px-to-vw-mb }
+
+  const output = []
+  let markerPos = -1        // index in output where the marker line sits
+
+  let i = 0
+  while (i < lines.length) {
+    const line = lines[i]
+    const trimmed = line.trimStart()
+
+    // Track marker line position in output
+    if (markerPos === -1 && line.includes('scss-kit:managed')) {
+      markerPos = output.length
+      output.push(line)
+      i++
+      continue
+    }
+
+    // Top-level :root block
+    if (trimmed === ':root {') {
+      const block = collectBlock(lines, i)
+      i += block.length
+      const blockText = block.join('\n')
+      if (blockText.includes('--px-to-vw:') && !blockText.includes('--px-to-vw-mb')) {
+        pcVarLines.push(...block)
+      } else {
+        output.push(...block)
+      }
+      continue
+    }
+
+    // @media blocks — look for --px-to-vw-mb inside
+    if (/^@media\b/.test(trimmed)) {
+      const mediaBlock = collectBlock(lines, i)
+      i += mediaBlock.length
+
+      if (!mediaBlock.join('\n').includes('--px-to-vw-mb:')) {
+        output.push(...mediaBlock)
+        continue
+      }
+
+      const mediaHeader = mediaBlock[0]
+      const mediaFooter = mediaBlock[mediaBlock.length - 1]
+      const mediaBody = mediaBlock.slice(1, -1)
+
+      // Separate :root { --px-to-vw-mb } from the rest of the media body
+      const innerRest = []
+      let j = 0
+      while (j < mediaBody.length) {
+        const bl = mediaBody[j]
+        if (bl.trimStart() === ':root {') {
+          const inner = collectBlock(mediaBody, j)
+          j += inner.length
+          if (inner.join('\n').includes('--px-to-vw-mb:')) {
+            mbMediaHeader = mbMediaHeader || mediaHeader
+            mbVarLines.push(...inner)
+          } else {
+            innerRest.push(...inner)
+          }
+        } else {
+          innerRest.push(bl)
+          j++
+        }
+      }
+
+      // Keep the @media block only if it still has rules
+      if (innerRest.some((l) => l.trim().length > 0)) {
+        output.push(mediaHeader)
+        output.push(...innerRest)
+        output.push(mediaFooter)
+      }
+      continue
+    }
+
+    output.push(line)
+    i++
+  }
+
+  // Build the lines to insert at the top
+  const toInsert = []
+  if (pcVarLines.length > 0) {
+    toInsert.push('', ...pcVarLines)
+  }
+  if (mbVarLines.length > 0 && mbMediaHeader) {
+    toInsert.push('', mbMediaHeader, ...mbVarLines, '}')
+  }
+
+  if (toInsert.length > 0) {
+    const insertAt = markerPos >= 0 ? markerPos + 1 : 0
+    output.splice(insertAt, 0, ...toInsert)
+  }
+
+  return output.join('\n').replace(/\n{3,}/g, '\n\n')
+}
   const relFromOut = path.relative(OUT_DIR, tmpCssAbs)
   const targetAbs = path.join(ASSETS_DIR, relFromOut)
   const targetRel = toPosix(path.relative(ROOT, targetAbs))
@@ -145,8 +273,9 @@ function syncOne(tmpCssAbs) {
   }
 
   const tmpText = readText(tmpCssAbs)
-  const cleanedText = removeCommentOnlyBlocks(tmpText)
-  const nextText = withMarker(cleanedText, sourceRel)
+  const cleaned = removeCommentOnlyBlocks(tmpText)
+  const withMarkerAdded = withMarker(cleaned, sourceRel)
+  const nextText = hoistCssVars(withMarkerAdded)
 
   if (!fs.existsSync(targetAbs)) {
     ensureDir(path.dirname(targetAbs))
