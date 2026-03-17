@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
+## [0.5.1] - 2026-03-17
+
+### Fixed
+
+- **`r.resp(pc, mb, 0)` type=0 crash**: When the type argument is `0` (pure fluid, no clamp bounds), autofill now emits `r.vw_mb(mobile)` instead of `r.resp_mb(mobile, 0)`, which previously caused a SCSS compile error (`max_px() expects positive coefficient`).
+- **Comment-only CSS blocks**: Instead of dropping the block entirely, comments are now extracted and emitted as standalone lines immediately before the next rule — preserving intent while eliminating empty selector blocks.
+- **CSS variable hoisting**: `--px-to-vw` and `--px-to-vw-mb` `:root` declarations are now moved to the very top of the output CSS file (right after the managed marker), ensuring variables are defined before any usage.
+
 ## [0.5.0] - 2026-03-17
 
 ### Added
