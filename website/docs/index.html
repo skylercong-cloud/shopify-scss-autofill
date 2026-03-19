@@ -70,6 +70,7 @@
             <a class="toc__link" href="#config-yml">config.yml</a>
             <a class="toc__link" href="#config">scss-kit.config.json</a>
             <a class="toc__link" href="#faq">FAQ</a>
+            <a class="toc__link" href="#incremental">增量生成与开发体验</a>
           </div>
         </aside>
 
@@ -1096,13 +1097,16 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
               <div class="row">
                 <div class="cell cmd">
                   node tools/scss-kit/cli.mjs responsive:generate:entries
+                  [--force]
                 </div>
                 <div class="cell">
                   （推荐）根据 <span class="code">scss-kit.config.json</span> 的
                   <span class="code">autofill.entries</span> 批量为每个入口生成
                   <span class="code"
                     >_responsive-autofill.&lt;entry&gt;.generated.scss</span
-                  >
+                  >。默认增量模式（基于文件哈希缓存），加
+                  <span class="code">--force</span>
+                  强制全量重新生成。生成失败时自动回滚。
                 </div>
               </div>
               <div class="row">
@@ -1166,9 +1170,29 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
                 <div class="cell cmd">r.re(pc-val, mobile-val)</div>
                 <div class="cell">
                   业务主函数（非数值型属性）：PC 直接返回第一个参数，Mobile
-                  由扫描器将第二个参数直接写入覆盖（不经任何函数包装）。适用于
-                  <span class="code">color</span>、<span class="code">display</span>、<span class="code">background</span>
-                  等属性。示例：<span class="code">color: r.re(#fff, #000);</span>
+                  由扫描器将第二个参数直接写入覆盖（不经任何函数包装）。支持短写映射：
+                  <span class="code">grid-cols-N</span> /
+                  <span class="code">cols-N</span> →
+                  <span class="code">repeat(N, 1fr)</span>，
+                  <span class="code">span-N</span> →
+                  <span class="code">span N</span>，
+                  <span class="code">order-N</span> /
+                  <span class="code">z-N</span> → 数字，
+                  <span class="code">gap-N</span> →
+                  <span class="code">Npx</span>，
+                  <span class="code">opacity-N</span> →
+                  <span class="code">N/100</span>。 适用于
+                  <span class="code">color</span>、<span class="code"
+                    >display</span
+                  >、<span class="code">background</span>、<span class="code"
+                    >grid-template-columns</span
+                  >
+                  等属性。示例：<span class="code"
+                    >grid-template-columns: r.re(grid-cols-4,
+                    grid-cols-2);</span
+                  >
+                  → PC: <span class="code">repeat(4, 1fr)</span>，Mobile:
+                  <span class="code">repeat(2, 1fr)</span>
                 </div>
               </div>
 
@@ -1284,6 +1308,12 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
   /* 非数值型属性使用 r.re() */
   color: r.re(#fff, #000);
   display: r.re(flex, none);
+}
+
+/* 栅格布局短写示例 */
+.grid {
+  grid-template-columns: r.re(grid-cols-4, grid-cols-2);
+  /* → PC: repeat(4, 1fr)  Mobile: repeat(2, 1fr) */
 }</code></pre>
             </div>
           </section>
@@ -1524,6 +1554,70 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
               per-entry 会为每个入口生成独立覆盖文件，避免 shared generated
               在不同页面之间互相污染。
             </p>
+          </section>
+
+          <section id="incremental" class="doc-section">
+            <h2>增量生成与开发体验</h2>
+
+            <h3>增量缓存</h3>
+            <p>
+              <span class="code">responsive:generate:entries</span>
+              默认启用增量模式：基于文件 SHA-256 哈希缓存（<span class="code"
+                >.scss-kit-cache.json</span
+              >）， 源文件未变化时跳过生成。配置变更会自动使所有缓存失效。
+            </p>
+            <p>使用 <span class="code">--force</span> 标志强制全量重新生成：</p>
+            <div class="codeblock">
+              <pre><code>node tools/scss-kit/cli.mjs responsive:generate:entries --force</code></pre>
+            </div>
+
+            <h3>错误恢复与回滚</h3>
+            <p>
+              <span class="code">responsive:generate</span> 和
+              <span class="code">responsive:generate:entries</span>
+              在生成前自动备份目标文件（<span class="code">.bak</span>），
+              生成失败时自动回滚到备份，成功后清理备份文件。
+            </p>
+
+            <h3>VS Code 代码片段</h3>
+            <p>
+              项目内置
+              <span class="code">.vscode/scss-kit.code-snippets</span>，在 SCSS
+              文件中输入函数名前缀即可触发补全：
+            </p>
+            <div class="table">
+              <div class="row">
+                <div class="cell cmd">r.resp</div>
+                <div class="cell">
+                  完整
+                  <span class="code">r.resp(pc, mobile, type)</span> 调用（type
+                  带下拉选择）
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r.vw</div>
+                <div class="cell">
+                  <span class="code">r.vw(pc, mobile)</span> 调用
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r.re</div>
+                <div class="cell">
+                  <span class="code">r.re(pc-val, mobile-val)</span> 调用
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">r.re-grid</div>
+                <div class="cell">
+                  <span class="code">r.re(grid-cols-N, grid-cols-N)</span>
+                  栅格快捷模板
+                </div>
+              </div>
+              <div class="row">
+                <div class="cell cmd">scss-kit-entry</div>
+                <div class="cell">入口文件模板（含 @use 和 @include）</div>
+              </div>
+            </div>
           </section>
         </article>
       </div>

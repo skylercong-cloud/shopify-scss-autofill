@@ -12,6 +12,9 @@ src/.sass-out/
 scss-kit/patches/
 scss-kit/_tmp-*/
 
+# scss-kit incremental cache
+.scss-kit-cache.json
+
 # npm pack artifacts
 *.tgz
 
