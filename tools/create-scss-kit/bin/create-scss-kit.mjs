@@ -285,6 +285,14 @@ function main() {
     console.log('[create-scss-kit] copied tools/scss-kit')
   }
 
+  // Copy .vscode snippets.
+  const templateVscodeDir = path.join(packageRoot, 'template', '.vscode')
+  if (exists(templateVscodeDir)) {
+    const dstVscodeDir = path.join(targetDir, '.vscode')
+    copyDirRecursive(templateVscodeDir, dstVscodeDir, { force: args.force })
+    console.log('[create-scss-kit] copied .vscode/scss-kit.code-snippets')
+  }
+
   // Write scss-kit.config.json if missing.
   const cfgPath = path.join(targetDir, 'scss-kit.config.json')
   if (exists(cfgPath) && !args.force) {

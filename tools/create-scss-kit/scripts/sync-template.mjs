@@ -66,6 +66,18 @@ function main() {
   console.log(
     '[sync-template] synced tools/scss-kit -> template/tools/scss-kit'
   )
+
+  // Sync .vscode/scss-kit.code-snippets
+  const vscodeSource = path.join(repoRoot, '.vscode', 'scss-kit.code-snippets')
+  if (exists(vscodeSource)) {
+    const vscodeTarget = path.join(packageRoot, 'template', '.vscode')
+    ensureDir(vscodeTarget)
+    fs.copyFileSync(
+      vscodeSource,
+      path.join(vscodeTarget, 'scss-kit.code-snippets')
+    )
+    console.log('[sync-template] synced .vscode/scss-kit.code-snippets')
+  }
 }
 
 main()

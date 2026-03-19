@@ -1,6 +1,6 @@
 # scss-kit 维护备忘（持续迭代）
 
-更新时间：2026-03-10
+更新时间：2026-03-19
 
 这份文档的目的：把 scss-kit 的“关键约束 / 设计决策 / 发布要点”固化下来，方便我们后续持续更新、迭代而不走回头路。
 
@@ -35,6 +35,9 @@
 
 - `node tools/scss-kit/cli.mjs responsive:generate:entries`
   - 按 `scss-kit.config.json` 的 `autofill.entries` 批量生成
+  - 默认增量模式：基于文件 SHA-256 哈希缓存（`.scss-kit-cache.json`），源文件未变化时跳过
+  - `--force` 强制全量重新生成
+  - 生成前自动备份（`.bak`），失败时回滚，成功后清理
 
 - `npm run css:watch`
   - 默认 safe mode：Sass 输出到 `src/.sass-out/` → 安全同步到 `assets/`
@@ -58,6 +61,12 @@
 - 模板必须随包发布：`tools/create-scss-kit/template/tools/scss-kit/*`
 - 为避免模板漂移，`create-scss-kit` 提供 `prepack` 自动同步脚本：
   - 见 [tools/create-scss-kit/scripts/sync-template.mjs](../create-scss-kit/scripts/sync-template.mjs)
+
+## 扩展能力
+
+- **r.re() 短写映射**：`RE_SHORTHAND_MAP` 存放快捷写法（如 `grid-cols-N`、`span-N`），PC 侧由 SCSS `$_re-shorthands` map + `_expand-re()` 展开，Mobile 侧由 JS `expandReValue()` 展开。
+- **VS Code 代码片段**：`.vscode/scss-kit.code-snippets` 提供函数签名补全。
+- **增量缓存**：`.scss-kit-cache.json`（已加入 `.gitignore`）存储源文件哈希与配置哈希。
 
 ## 迭代清单（建议）
 

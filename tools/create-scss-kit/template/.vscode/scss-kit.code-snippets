@@ -1,0 +1,120 @@
+{
+  "r.resp — responsive clamp (font/element)": {
+    "prefix": ["r.resp", "resp"],
+    "scope": "scss",
+    "body": [
+      "r.resp(${1:pc}px, ${2:mobile}px, ${3|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|}${4:, ${5|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|}})"
+    ],
+    "description": "r.resp(pc, mobile, desktopType[, mobileType]) — clamp with minimum floor. PC: clamp(min, vw, px); Mobile: autofill override via resp_mb()."
+  },
+  "r.resp (3 args)": {
+    "prefix": ["r.resp3", "resp3"],
+    "scope": "scss",
+    "body": [
+      "r.resp(${1:pc}px, ${2:mobile}px, ${3|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|})"
+    ],
+    "description": "r.resp(pc, mobile, type) — same type for both desktop and mobile."
+  },
+  "r.vw — responsive vw (spacing)": {
+    "prefix": ["r.vw", "vw"],
+    "scope": "scss",
+    "body": [
+      "r.vw(${1:pc}px, ${2:mobile}px)"
+    ],
+    "description": "r.vw(pc, mobile) — spacing-first. PC: min(vw, px); Mobile: pure vw via autofill."
+  },
+  "r.re — responsive non-dimension value": {
+    "prefix": ["r.re", "re"],
+    "scope": "scss",
+    "body": [
+      "r.re(${1:pc-value}, ${2:mobile-value})"
+    ],
+    "description": "r.re(pc-val, mobile-val) — Non-dimension values (color, display, grid-cols-N, etc.). PC: returns pc-val; Mobile: autofill emits mobile-val."
+  },
+  "r.re grid-cols": {
+    "prefix": ["r.re-grid", "re-grid", "grid-cols"],
+    "scope": "scss",
+    "body": [
+      "r.re(grid-cols-${1:4}, grid-cols-${2:2})"
+    ],
+    "description": "r.re(grid-cols-N, grid-cols-M) — Responsive grid columns. Expands to repeat(N, 1fr)."
+  },
+  "r.vw_pc — desktop vw with cap": {
+    "prefix": ["r.vw_pc", "vw_pc"],
+    "scope": "scss",
+    "body": [
+      "r.vw_pc(${1:pc}px)"
+    ],
+    "description": "r.vw_pc(pc) — Desktop vw with upper bound: min(calc(n * var(--px-to-vw)), px)."
+  },
+  "r.vw_pc_raw — desktop pure vw": {
+    "prefix": ["r.vw_pc_raw", "vw_pc_raw"],
+    "scope": "scss",
+    "body": [
+      "r.vw_pc_raw(${1:pc}px)"
+    ],
+    "description": "r.vw_pc_raw(pc) — Desktop pure vw, no upper bound cap."
+  },
+  "r.vw_mb — mobile pure vw": {
+    "prefix": ["r.vw_mb", "vw_mb"],
+    "scope": "scss",
+    "body": [
+      "r.vw_mb(${1:mobile}px)"
+    ],
+    "description": "r.vw_mb(mobile) — Mobile pure vw: calc(n * var(--px-to-vw-mb))."
+  },
+  "r.resp_mb — mobile strategy selector": {
+    "prefix": ["r.resp_mb", "resp_mb"],
+    "scope": "scss",
+    "body": [
+      "r.resp_mb(${1:mobile}px, ${2|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|})"
+    ],
+    "description": "r.resp_mb(mobile, type) — Selects min-first/max-first/dual-bound based on mobileClampMode."
+  },
+  "r.clamp_pc — desktop clamp formula": {
+    "prefix": ["r.clamp_pc", "clamp_pc"],
+    "scope": "scss",
+    "body": [
+      "r.clamp_pc(${1:pc}px, ${2:min})"
+    ],
+    "description": "r.clamp_pc(pc, min) — clamp(min, calc(pc * var(--px-to-vw)), pc)."
+  },
+  "r.clamp_mb — mobile clamp formula": {
+    "prefix": ["r.clamp_mb", "clamp_mb"],
+    "scope": "scss",
+    "body": [
+      "r.clamp_mb(${1:mobile}px, ${2:min}${3:, ${4:max}})"
+    ],
+    "description": "r.clamp_mb(mobile, min[, max]) — clamp(min, calc(mobile * var(--px-to-vw-mb)), max)."
+  },
+  "r.min_px — clamp minimum calculator": {
+    "prefix": ["r.min_px", "min_px"],
+    "scope": "scss",
+    "body": [
+      "r.min_px(${1:value}px, ${2|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|}${3:, ${4|mobile,desktop|}})"
+    ],
+    "description": "r.min_px(value, type[, range]) — Calculate clamp minimum: max(designPx * coef, floor)."
+  },
+  "r.max_px — clamp maximum calculator": {
+    "prefix": ["r.max_px", "max_px"],
+    "scope": "scss",
+    "body": [
+      "r.max_px(${1:value}px, ${2|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|}${3:, ${4|mobile,desktop|}})"
+    ],
+    "description": "r.max_px(value, type[, range]) — Calculate clamp maximum: min(designPx * maxCoef, ceiling)."
+  },
+  "scss-kit entry boilerplate": {
+    "prefix": ["scss-kit-entry", "entry-boilerplate"],
+    "scope": "scss",
+    "body": [
+      "@use \"./responsive\" as r;",
+      "@use \"./_responsive-autofill.${1:${TM_FILENAME_BASE}}.generated\" as auto;",
+      "",
+      "${0:// Your styles here}",
+      "",
+      "// 注意：请保持本行在文件末尾，避免自动生成的移动端代码覆盖顺序异常。",
+      "@include auto.responsive_autofill_overrides();"
+    ],
+    "description": "Standard scss-kit entry file boilerplate with @use responsive + autofill include."
+  }
+}
