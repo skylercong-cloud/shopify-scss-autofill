@@ -1,6 +1,6 @@
 {
   "name": "create-shopify-scss-autofill",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Scaffold scss-kit (SCSS workflow + responsive autofill) for Shopify theme development.",
   "keywords": [
     "shopify",
