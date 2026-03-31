@@ -45,7 +45,7 @@
         "mobileMax": {"type": "integer", "minimum": 1},
         "scanDirs": {"type": "array", "items": {"type": "string"}},
         "output": {"type": "string"},
-        "entries": {"type": "array", "items": {"type": "string"}}
+        "entries": {"type": "array", "items": {"oneOf": [{"type": "string"}, {"type": "object", "required": ["file"], "properties": {"file": {"type": "string"}, "varScope": {"type": "string"}}}]}}
       }
     },
     "themeKit": {

@@ -57,11 +57,30 @@
 - 顶部 `@use "./_responsive-autofill.<page>.generated" as auto;`
 - 底部 `@include auto.responsive_autofill_overrides();`（确保覆盖顺序）
 
+### varScope（可选）
+
+默认情况下，`--px-to-vw` 和 `--px-to-vw-mb` 变量声明在 `:root` 上。如果页面需要将变量作用域限定到特定选择器（例如 section 级别），可以在 `autofill.entries` 中使用对象格式：
+
+```json
+{
+  "autofill": {
+    "entries": [
+      "src/styles/page-a.scss",
+      { "file": "src/styles/page-b.scss", "varScope": ".page-b-wrapper" }
+    ]
+  }
+}
+```
+
+`page-b` 生成的 CSS 变量将挂载在 `.page-b-wrapper` 而非 `:root`。
+
 推荐约定：
 
 - 字体/需要下限兜底的值：使用 `r.resp(pc, mobile, desktopType[, mobileType])`
 - 大多数间距（padding/margin/gap）：使用 `r.vw(pc, mobile)`
 - 少量间距若确实需要最小值：改用 `r.resp(...)`（不要给 `r.vw` 追加参数）
+- 非数值型属性（颜色、display 等）需要移动端不同值：使用 `r.re(pc-val, mobile-val)`
+- 栅格/布局快捷写法：`r.re(grid-cols-4, grid-cols-2)` → PC `repeat(4, 1fr)` / Mobile `repeat(2, 1fr)`
 
 `r.vw(pc, mobile)` 的行为：
 
@@ -88,7 +107,23 @@
   - 说明：`r.vw` 仅保留两个参数；若你需要最小值下限，请使用 `r.resp(...)`。
   - 示例：`margin-top: r.vw(40px, 24px);`
 
-### 由 `r.resp` / `r.vw` 间接使用（一般不直接写）
+- `r.re($pc-val, $mobile-val: null)`
+  - 用途：用于**非数值型**属性（颜色、`display`、`background`、栅格布局等）需要在移动端输出不同值的场景。
+  - PC 输出：直接返回 `$pc-val`，不做任何运算。支持短写（shorthand），例如 `grid-cols-4` 自动展开为 `repeat(4, 1fr)`。
+  - Mobile 输出：由自动生成器扫描 `r.re(...)` 后，在 `@media` 中直接输出 `$mobile-val`（不经过任何函数包装）。短写在 JS 侧同样自动展开。
+  - 支持的短写格式：
+    - `grid-cols-N` / `cols-N` → `repeat(N, 1fr)`（栅格列）
+    - `grid-rows-N` / `rows-N` → `repeat(N, 1fr)`（栅格行）
+    - `span-N` → `span N`（跨列/行）
+    - `order-N` → `N`（排序）
+    - `gap-N` → `Npx`（间距）
+    - `opacity-N` → `N/100`（透明度，如 `opacity-50` → `0.5`）
+    - `z-N` → `N`（z-index）
+  - 示例：`color: r.re(#fff, #000);` → PC: `#fff`，移动端: `#000`
+  - 示例：`display: r.re(flex, none);`
+  - 示例：`grid-template-columns: r.re(grid-cols-4, grid-cols-2);` → PC: `repeat(4, 1fr)`，移动端: `repeat(2, 1fr)`
+
+### 由 `r.resp` / `r.vw` / `r.re` 间接使用（一般不直接写）
 
 - 设计稿策略（新增）
   - `responsive.mobileClampMode`: `auto | min-first | max-first | dual-bound`
@@ -137,8 +172,12 @@
   - 用途：按 `mobileClampMode` 在移动端选择 `min-first / max-first / dual-bound` 策略。
 
 - `r.vw_pc($pc)`
-  - 用途：生成 PC 端 `vw` 并带上限。
+  - 用途：生成 PC 端 `vw` 并带上限（防止超大屏放大）。
   - 结构：`min(calc($pc * var(--px-to-vw)), $pc)`。
+
+- `r.vw_pc_raw($pc)`
+  - 用途：生成 PC 端**纯 vw**，无上限约束（适用于需要继续随屏幕放大的场景）。
+  - 结构：`calc($pc * var(--px-to-vw))`。
 
 - `r.vw_mb($mobile)`
   - 用途：生成移动端纯 `vw`。
@@ -159,6 +198,29 @@
 手动兜底（不建议日常使用，会直接覆盖 assets 同名文件）：
 
 - `sass --watch src/styles:assets --style=expanded --no-source-map`
+
+## 增量生成与错误恢复
+
+`responsive:generate:entries` 默认启用增量模式：
+
+- 基于文件 SHA-256 哈希缓存（`.scss-kit-cache.json`），源文件未变化时跳过生成。
+- 配置变更会自动使所有缓存失效。
+- 使用 `--force` 强制全量重新生成：`node tools/scss-kit/cli.mjs responsive:generate:entries --force`
+- 每次生成前自动备份目标文件（`.bak`），失败时自动回滚，成功后清理备份。
+- `responsive:generate` 单入口命令同样支持备份/回滚。
+
+## VS Code 代码片段
+
+项目内置 `.vscode/scss-kit.code-snippets`，在 SCSS 文件中输入以下前缀可触发补全：
+
+- `r.resp` — 完整 `r.resp(pc, mobile, type)` 调用（type 带下拉选择）
+- `r.vw` — `r.vw(pc, mobile)` 调用
+- `r.re` — `r.re(pc-val, mobile-val)` 调用
+- `r.re-grid` — `r.re(grid-cols-N, grid-cols-N)` 栅格快捷模板
+- `r.vw_pc` / `r.vw_pc_raw` / `r.vw_mb` — 单端 vw 函数
+- `r.clamp_pc` / `r.clamp_mb` — clamp 函数
+- `r.resp_mb` / `r.min_px` / `r.max_px` — 进阶函数
+- `scss-kit-entry` — 入口文件模板（含 @use 和 @include）
 
 ## 排查
 

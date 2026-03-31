@@ -1,6 +1,6 @@
 # scss-kit 维护备忘（持续迭代）
 
-更新时间：2026-03-19
+更新时间：2026-03-31
 
 这份文档的目的：把 scss-kit 的“关键约束 / 设计决策 / 发布要点”固化下来，方便我们后续持续更新、迭代而不走回头路。
 
@@ -43,12 +43,14 @@
   - 默认 safe mode：Sass 输出到 `src/.sass-out/` → 安全同步到 `assets/`
 
 - `npm run dev:theme:auto`
-  - 并行：responsive:watch + css:watch + theme:watch
+  - 启动前先运行 `scss-kit:generate` + `scss-kit:responsive:generate` + `scss-kit:responsive:generate:entries`
+  - 然后并行：responsive:watch + css:watch + theme:watch
 
 ## 扫描器策略（稳定性）
 
 - 优先 AST（`postcss` + `postcss-scss`），失败回退 legacy 正则扫描。
-- AST 依赖是“可选按需加载”，保证“先 init 再 install”的接入流程可用。
+- AST 依赖是"可选按需加载"，保证"先 init 再 install"的接入流程可用。
+- `responsive:generate` 扫描时会排除所有 `_responsive-autofill*.generated.scss` 文件，防止循环扫描。
 
 ## 发布/脚手架（npm create）
 
@@ -65,6 +67,7 @@
 ## 扩展能力
 
 - **r.re() 短写映射**：`RE_SHORTHAND_MAP` 存放快捷写法（如 `grid-cols-N`、`span-N`），PC 侧由 SCSS `$_re-shorthands` map + `_expand-re()` 展开，Mobile 侧由 JS `expandReValue()` 展开。
+- **varScope**：`autofill.entries` 支持 `{ file, varScope }` 对象格式，把 CSS 变量作用域限定到指定选择器。
 - **VS Code 代码片段**：`.vscode/scss-kit.code-snippets` 提供函数签名补全。
 - **增量缓存**：`.scss-kit-cache.json`（已加入 `.gitignore`）存储源文件哈希与配置哈希。
 

@@ -145,12 +145,12 @@ function removeCommentOnlyBlocks(cssText) {
 function hoistCssVars(cssText) {
   const lines = cssText.split(/\r?\n/)
 
-  const pcVarLines = []     // lines of :root { --px-to-vw }
-  let mbMediaHeader = ''    // @media header for the --px-to-vw-mb block
-  const mbVarLines = []     // lines of :root { --px-to-vw-mb }
+  const pcVarLines = [] // lines of :root { --px-to-vw }
+  let mbMediaHeader = '' // @media header for the --px-to-vw-mb block
+  const mbVarLines = [] // lines of :root { --px-to-vw-mb }
 
   const output = []
-  let markerPos = -1        // index in output where the marker line sits
+  let markerPos = -1 // index in output where the marker line sits
 
   let i = 0
   while (i < lines.length) {
@@ -170,7 +170,10 @@ function hoistCssVars(cssText) {
       const block = collectBlock(lines, i)
       i += block.length
       const blockText = block.join('\n')
-      if (blockText.includes('--px-to-vw:') && !blockText.includes('--px-to-vw-mb')) {
+      if (
+        blockText.includes('--px-to-vw:') &&
+        !blockText.includes('--px-to-vw-mb')
+      ) {
         pcVarLines.push(...block)
       } else {
         output.push(...block)
@@ -241,6 +244,8 @@ function hoistCssVars(cssText) {
 
   return output.join('\n').replace(/\n{3,}/g, '\n\n')
 }
+
+function syncOne(tmpCssAbs) {
   const relFromOut = path.relative(OUT_DIR, tmpCssAbs)
   const targetAbs = path.join(ASSETS_DIR, relFromOut)
   const targetRel = toPosix(path.relative(ROOT, targetAbs))
@@ -302,16 +307,18 @@ function hoistCssVars(cssText) {
 function startSassWatch() {
   ensureDir(OUT_DIR)
   const sassArgs = [
+    'sass',
     '--watch',
     `${toPosix(path.relative(ROOT, STYLES_DIR))}:${toPosix(
       path.relative(ROOT, OUT_DIR)
     )}`,
     '--style=expanded',
     '--no-source-map',
+    '--silence-deprecation=if-function',
   ]
 
   console.log('[scss-kit] starting sass watch (safe mode)')
-  const child = spawn('sass', sassArgs, {
+  const child = spawn('npx', sassArgs, {
     stdio: 'inherit',
     shell: process.platform === 'win32',
     cwd: ROOT,

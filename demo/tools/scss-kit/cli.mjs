@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import { createRequire } from 'node:module'
 import path from 'node:path'
@@ -9,6 +10,55 @@ const ROOT = process.cwd()
 const CONFIG_NAME = 'scss-kit.config.json'
 
 const DEFAULT_MOBILE_MAX = 850
+
+const CACHE_FILE = '.scss-kit-cache.json'
+
+// ── Incremental cache helpers ──
+
+function loadHashCache() {
+  const cachePath = path.join(ROOT, CACHE_FILE)
+  try {
+    return JSON.parse(fs.readFileSync(cachePath, 'utf8'))
+  } catch {
+    return {}
+  }
+}
+
+function saveHashCache(cache) {
+  const cachePath = path.join(ROOT, CACHE_FILE)
+  fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2) + '\n', 'utf8')
+}
+
+function fileHash(absPath) {
+  const content = fs.readFileSync(absPath)
+  return crypto.createHash('sha256').update(content).digest('hex')
+}
+
+function contentHash(str) {
+  return crypto.createHash('sha256').update(str).digest('hex')
+}
+
+// ── Backup / rollback helpers ──
+
+function backupFile(absPath) {
+  if (!fs.existsSync(absPath)) return null
+  const backupPath = absPath + '.bak'
+  fs.copyFileSync(absPath, backupPath)
+  return backupPath
+}
+
+function rollbackFile(absPath, backupPath) {
+  if (backupPath && fs.existsSync(backupPath)) {
+    fs.copyFileSync(backupPath, absPath)
+    fs.unlinkSync(backupPath)
+  }
+}
+
+function cleanupBackup(backupPath) {
+  if (backupPath && fs.existsSync(backupPath)) {
+    fs.unlinkSync(backupPath)
+  }
+}
 
 const MOBILE_PROFILE_PRESETS = {
   590: {
@@ -124,7 +174,7 @@ function loadConfig() {
 }
 
 function toPosix(p) {
-  return p.replaceAll('\\\\', '/')
+  return p.replaceAll('\\', '/')
 }
 
 function ensurePx(v) {
@@ -414,6 +464,69 @@ function replaceFunctionCalls(value, token, mapArgsToReplacement) {
   return { value: out.trim(), changed }
 }
 
+// ── r.re() complex property expansion ──
+
+const RE_SHORTHAND_MAP = {
+  // grid-cols-N → repeat(N, 1fr)
+  'grid-cols': (n) => `repeat(${n}, 1fr)`,
+  // grid-rows-N → repeat(N, 1fr)
+  'grid-rows': (n) => `repeat(${n}, 1fr)`,
+  // cols-N → (alias for grid-cols)
+  cols: (n) => `repeat(${n}, 1fr)`,
+  // rows-N → (alias for grid-rows)
+  rows: (n) => `repeat(${n}, 1fr)`,
+  // gap-N → Npx
+  gap: (n) => `${n}px`,
+  // span-N → span N
+  span: (n) => `span ${n}`,
+  // order-N → N
+  order: (n) => `${n}`,
+  // opacity-N → N/100
+  opacity: (n) => `${n / 100}`,
+  // z-N → N
+  z: (n) => `${n}`,
+}
+
+function expandReValue(raw) {
+  const val = raw.trim()
+  // Try matching pattern: prefix-N (e.g. grid-cols-4, span-2)
+  const match = val.match(/^(.+?)-(\d+(?:\.\d+)?)$/)
+  if (match) {
+    const prefix = match[1]
+    const num = Number(match[2])
+    const expander = RE_SHORTHAND_MAP[prefix]
+    if (expander) return expander(num)
+  }
+  // No shorthand match: return as-is (original behavior)
+  return val
+}
+
+function generateReShorthandMap() {
+  const entries = []
+  // grid-cols-1 through grid-cols-12
+  for (let n = 1; n <= 12; n++) {
+    entries.push(`  grid-cols-${n}: repeat(${n}, 1fr)`)
+    entries.push(`  cols-${n}: repeat(${n}, 1fr)`)
+    entries.push(`  grid-rows-${n}: repeat(${n}, 1fr)`)
+    entries.push(`  rows-${n}: repeat(${n}, 1fr)`)
+    entries.push(`  span-${n}: span ${n}`)
+    entries.push(`  order-${n}: ${n}`)
+    entries.push(`  z-${n}: ${n}`)
+  }
+  // gap shortcuts (common spacing values)
+  for (const g of [0, 2, 4, 8, 10, 12, 16, 20, 24, 32, 40, 48, 60, 80]) {
+    entries.push(`  gap-${g}: ${g}px`)
+  }
+  // opacity shortcuts (0, 10, 20, ..., 100)
+  for (let o = 0; o <= 100; o += 10) {
+    entries.push(`  opacity-${o}: ${o === 0 ? 0 : o / 100}`)
+  }
+  entries.push(`  opacity-5: 0.05`)
+  entries.push(`  opacity-25: 0.25`)
+  entries.push(`  opacity-75: 0.75`)
+  return '\n' + entries.join(',\n') + ',\n'
+}
+
 function replaceAutofillCalls(value, { ns, name, vwName }) {
   const respToken = `${ns}.${name}(`
   const replacedResp = replaceFunctionCalls(value, respToken, (args) => {
@@ -437,12 +550,16 @@ function replaceAutofillCalls(value, { ns, name, vwName }) {
     }
   )
 
-  // r.re(pc-val, mobile-val): passthrough for non-dimension values (color, display, etc.)
-  // Mobile output is the second argument directly (no function wrapper).
+  // r.re(pc-val, mobile-val): passthrough for non-dimension responsive values.
+  // Supports complex property mappings:
+  //   r.re(#fff, #000)               → mobile: #000
+  //   r.re(flex, none)               → mobile: none
+  //   r.re(grid-cols-4, grid-cols-2) → mobile: repeat(2, 1fr)
+  //   r.re(grid-cols-6, grid-cols-3) → mobile: repeat(3, 1fr)
   const reToken = `${ns}.re(`
   const replacedRe = replaceFunctionCalls(replacedVw.value, reToken, (args) => {
     if (args.length < 2) return null
-    return args[1]
+    return expandReValue(args[1])
   })
 
   return {
@@ -628,13 +745,22 @@ function getAutofillEntries(cfg) {
   if (!Array.isArray(entries)) {
     throw new Error('autofill.entries must be an array of entry scss paths')
   }
-  return entries.filter(Boolean)
+  // Each entry may be a string path or an object { file, varScope }
+  return entries.filter(Boolean).map((e) => {
+    if (typeof e === 'string') return { file: e, varScope: null }
+    if (e && typeof e === 'object' && typeof e.file === 'string')
+      return { file: e.file, varScope: e.varScope ?? null }
+    throw new Error(
+      'autofill.entries items must be a string path or { file, varScope }'
+    )
+  })
 }
 
-function generateAutofillScss(cfg, collectedRules) {
+function generateAutofillScss(cfg, collectedRules, varScope) {
   const { ns, mobileMax } = getAutofill(cfg)
   const desktopWidth = cfg?.design?.desktopWidth ?? 1920
   const mobileWidth = cfg?.design?.mobileWidth ?? 750
+  const scope = varScope ?? ':root'
 
   const header = `@use "./responsive" as ${ns};
 
@@ -646,12 +772,27 @@ function generateAutofillScss(cfg, collectedRules) {
   const mixinHeader = `@mixin responsive_autofill_overrides() {\n`
   const mixinFooter = `\n}\n`
 
+  // PC vars block: 2-space indent inside mixin, 4-space for property
+  const pcVarsBlock =
+    `  ${scope} {\n` +
+    `    --px-to-vw: calc(100vw / ${desktopWidth});\n` +
+    `  }\n`
+
+  // MB vars block: 4-space indent inside @media, 6-space for property
+  const mbVarsBlock =
+    `    ${scope} {\n` +
+    `      --px-to-vw-mb: calc(100vw / ${mobileWidth});\n` +
+    `    }\n`
+
   if (!collectedRules.length) {
     return (
       header +
       mixinHeader +
-      `  :root {\n    --px-to-vw: calc(100vw / ${desktopWidth});\n  }\n\n` +
-      `  @media screen and (max-width: ${mobileMax}px) {\n    :root {\n      --px-to-vw-mb: calc(100vw / ${mobileWidth});\n    }\n  }\n` +
+      pcVarsBlock +
+      `\n` +
+      `  @media screen and (max-width: ${mobileMax}px) {\n` +
+      mbVarsBlock +
+      `  }\n` +
       mixinFooter
     )
   }
@@ -675,9 +816,11 @@ function generateAutofillScss(cfg, collectedRules) {
   return (
     header +
     mixinHeader +
-    `  :root {\n    --px-to-vw: calc(100vw / ${desktopWidth});\n  }\n\n` +
+    pcVarsBlock +
+    `\n` +
     `  @media screen and (max-width: ${mobileMax}px) {\n` +
-    `    :root {\n      --px-to-vw-mb: calc(100vw / ${mobileWidth});\n    }\n\n` +
+    mbVarsBlock +
+    `\n` +
     blocks.map((b) => b.replaceAll(/^/gm, '    ')).join('\n\n') +
     `\n  }` +
     mixinFooter
@@ -765,7 +908,7 @@ function toScssMap(obj) {
   const entries = Object.entries(obj)
     .map(([k, v]) => `  ${k}: ${v},`)
     .join('\n')
-  return `(${entries}\n)`
+  return `(\n${entries}\n)`
 }
 
 function generateResponsiveScss(cfg) {
@@ -996,10 +1139,27 @@ $mobile-clamp-mode: ${responsive.resolvedMobileClampMode};
 // re(): passthrough for non-dimension responsive values (color, display, background, etc.)
 // - PC: returns first arg unchanged.
 // - Mobile: scss-kit autofill scanner reads second arg and emits mobile override directly.
+// Shorthand mappings (expanded by scanner):
+//   grid-cols-N → repeat(N, 1fr)    grid-rows-N → repeat(N, 1fr)
+//   span-N → span N                 order-N → N
+//   opacity-N → N/100               z-N → N
 // Usage:  color: r.re(#fff, #000);   → PC: #fff, Mobile override: #000
 //         display: r.re(flex, none);
+//         grid-template-columns: r.re(grid-cols-4, grid-cols-2); → PC: repeat(4, 1fr), Mobile: repeat(2, 1fr)
+
+// Shorthand expansion map for r.re() (PC side).
+// The scanner expands the mobile side in JS; this map handles the PC side in SCSS.
+$_re-shorthands: (${generateReShorthandMap()});
+
+@function _expand-re($val) {
+  @if meta.type-of($val) == string and map.has-key($_re-shorthands, $val) {
+    @return map.get($_re-shorthands, $val);
+  }
+  @return $val;
+}
+
 @function re($pc-val, $mobile-val: null) {
-  @return $pc-val;
+  @return _expand-re($pc-val);
 }
 `
 }
@@ -1049,7 +1209,7 @@ function patchPackageJson(cfg) {
     'dev:theme':
       'concurrently -k -n CSS,THEME "npm:css:watch" "npm:theme:watch"',
     'dev:theme:auto':
-      'npm run scss-kit:generate && npm run scss-kit:responsive:generate && concurrently -k -n AUTO,CSS,THEME "npm:responsive:watch" "npm:css:watch" "npm:theme:watch"',
+      'npm run scss-kit:generate && npm run scss-kit:responsive:generate && npm run scss-kit:responsive:generate:entries && concurrently -k -n AUTO,CSS,THEME "npm:responsive:watch" "npm:css:watch" "npm:theme:watch"',
   }
   for (const [k, v] of Object.entries(watchScripts)) {
     if (pkg.scripts[k] && pkg.scripts[k] !== v) conflicts.push(`scripts.${k}`)
@@ -1352,27 +1512,55 @@ function main() {
           : path.join(ROOT, explicitOutputArg)
         : path.join(ROOT, defaultOutRel)
 
-      const collected = scanScssForAutofill(targetAbs, autofill)
-      const scss = generateAutofillScss(config, collected)
-      const res = writeFileSafely(outAbs, scss, {
-        overwriteIfContains: 'Generated by scss-kit',
-      })
-      console.log(
-        JSON.stringify(
-          {
-            action: 'responsive:generate',
-            ok: true,
-            output: toPosix(path.relative(ROOT, outAbs)),
-            scannedFiles: 1,
-            rules: collected.length,
-            written: toPosix(path.relative(ROOT, res.written)),
-            mode: res.mode,
-            target: toPosix(path.relative(ROOT, targetAbs)),
-          },
-          null,
-          2
+      // Backup for rollback on failure
+      const backupPath = backupFile(outAbs)
+      try {
+        const collected = scanScssForAutofill(targetAbs, autofill)
+        // Look up varScope for this entry from config
+        const entryVarScope =
+          getAutofillEntries(config).find(
+            (e) =>
+              path.resolve(
+                path.isAbsolute(e.file) ? e.file : path.join(ROOT, e.file)
+              ) === path.resolve(targetAbs)
+          )?.varScope ?? null
+        const scss = generateAutofillScss(config, collected, entryVarScope)
+        const res = writeFileSafely(outAbs, scss, {
+          overwriteIfContains: 'Generated by scss-kit',
+        })
+        cleanupBackup(backupPath)
+        console.log(
+          JSON.stringify(
+            {
+              action: 'responsive:generate',
+              ok: true,
+              output: toPosix(path.relative(ROOT, outAbs)),
+              scannedFiles: 1,
+              rules: collected.length,
+              written: toPosix(path.relative(ROOT, res.written)),
+              mode: res.mode,
+              target: toPosix(path.relative(ROOT, targetAbs)),
+            },
+            null,
+            2
+          )
         )
-      )
+      } catch (err) {
+        rollbackFile(outAbs, backupPath)
+        console.log(
+          JSON.stringify(
+            {
+              action: 'responsive:generate',
+              ok: false,
+              reason: `generation failed (rolled back): ${String(err?.message ?? err)}`,
+              target: toPosix(path.relative(ROOT, targetAbs)),
+            },
+            null,
+            2
+          )
+        )
+        process.exit(1)
+      }
       return
     }
 
@@ -1381,11 +1569,20 @@ function main() {
       walkScssFiles(path.isAbsolute(d) ? d : path.join(ROOT, d), absFiles)
     }
 
-    // Avoid scanning the output file itself.
+    // Avoid scanning the output file itself and any per-entry generated files.
     const outputAbs = autofill.outputAbs
-    const files = absFiles.filter(
-      (f) => path.resolve(f) !== path.resolve(outputAbs)
-    )
+    const files = absFiles.filter((f) => {
+      const resolved = path.resolve(f)
+      if (resolved === path.resolve(outputAbs)) return false
+      // Skip all _responsive-autofill*.generated.scss files
+      const base = path.basename(f)
+      if (
+        base.startsWith('_responsive-autofill') &&
+        base.endsWith('.generated.scss')
+      )
+        return false
+      return true
+    })
 
     const collected = []
     for (const f of files) {
@@ -1417,6 +1614,7 @@ function main() {
   if (cmd === 'responsive:generate:entries') {
     const autofill = getAutofill(config)
     const entries = getAutofillEntries(config)
+    const forceAll = process.argv.includes('--force')
 
     if (!entries.length) {
       console.log(
@@ -1434,8 +1632,13 @@ function main() {
       process.exit(1)
     }
 
+    // Load incremental cache
+    const cache = forceAll ? {} : loadHashCache()
+    const configHash = contentHash(JSON.stringify(config))
+    const nextCache = { _configHash: configHash }
+
     const results = []
-    for (const entryRel of entries) {
+    for (const { file: entryRel, varScope: entryVarScope } of entries) {
       const entryAbs = path.isAbsolute(entryRel)
         ? entryRel
         : path.join(ROOT, entryRel)
@@ -1451,20 +1654,62 @@ function main() {
       )
       const outAbs = path.join(ROOT, outRel)
 
-      const collected = scanScssForAutofill(entryAbs, autofill)
-      const scss = generateAutofillScss(config, collected)
-      const res = writeFileSafely(outAbs, scss, {
-        overwriteIfContains: 'Generated by scss-kit',
-      })
-      results.push({
-        entry: toPosix(path.relative(ROOT, entryAbs)),
-        ok: true,
-        rules: collected.length,
-        output: toPosix(path.relative(ROOT, outAbs)),
-        written: toPosix(path.relative(ROOT, res.written)),
-        mode: res.mode,
-      })
+      // ── Incremental check: skip if source hash unchanged ──
+      const srcHash = fileHash(entryAbs)
+      const cacheKey = toPosix(path.relative(ROOT, entryAbs))
+      if (
+        !forceAll &&
+        cache[cacheKey] === srcHash &&
+        cache._configHash === configHash &&
+        fs.existsSync(outAbs)
+      ) {
+        nextCache[cacheKey] = srcHash
+        results.push({
+          entry: cacheKey,
+          ok: true,
+          rules: null,
+          output: toPosix(path.relative(ROOT, outAbs)),
+          written: null,
+          mode: 'skipped (unchanged)',
+        })
+        continue
+      }
+
+      // ── Backup existing output for rollback ──
+      const backupPath = backupFile(outAbs)
+
+      try {
+        const collected = scanScssForAutofill(entryAbs, autofill)
+        const scss = generateAutofillScss(config, collected, entryVarScope)
+        const res = writeFileSafely(outAbs, scss, {
+          overwriteIfContains: 'Generated by scss-kit',
+        })
+
+        // Success: update cache, cleanup backup
+        nextCache[cacheKey] = srcHash
+        cleanupBackup(backupPath)
+
+        results.push({
+          entry: cacheKey,
+          ok: true,
+          rules: collected.length,
+          output: toPosix(path.relative(ROOT, outAbs)),
+          written: toPosix(path.relative(ROOT, res.written)),
+          mode: res.mode,
+        })
+      } catch (err) {
+        // ── Rollback on failure ──
+        rollbackFile(outAbs, backupPath)
+        results.push({
+          entry: cacheKey,
+          ok: false,
+          reason: `generation failed (rolled back): ${String(err?.message ?? err)}`,
+        })
+      }
     }
+
+    // Persist cache
+    saveHashCache(nextCache)
 
     const ok = results.every((r) => r.ok)
     console.log(
@@ -1482,7 +1727,7 @@ function main() {
   }
 
   console.log(
-    `scss-kit usage:\n  node tools/scss-kit/cli.mjs init\n  node tools/scss-kit/cli.mjs generate\n  node tools/scss-kit/cli.mjs doctor\n  node tools/scss-kit/cli.mjs responsive:extract <file.scss>\n  node tools/scss-kit/cli.mjs responsive:generate\n`
+    `scss-kit usage:\n  node tools/scss-kit/cli.mjs init\n  node tools/scss-kit/cli.mjs generate\n  node tools/scss-kit/cli.mjs doctor\n  node tools/scss-kit/cli.mjs responsive:extract <file.scss>\n  node tools/scss-kit/cli.mjs responsive:generate [file.scss]\n  node tools/scss-kit/cli.mjs responsive:generate:entries [--force]\n`
   )
 }
 

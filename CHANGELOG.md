@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
+## [0.6.1] - 2026-03-31
+
+### Fixed
+
+- **`toPosix()` path handling on Windows**: Fixed `toPosix()` only replacing double backslashes (`\\\\`) instead of single backslashes (`\\`), causing incorrect POSIX paths on Windows systems.
+- **Missing `syncOne()` function declaration in `css-watch-safe.mjs`**: The `function syncOne(tmpCssAbs)` header was missing, causing a runtime crash during CSS safe-mode synchronization.
+- **Sass invocation**: Changed from `spawn('sass', ...)` to `spawn('npx', ['sass', ...])` to ensure the project-local `sass` is used. Added `--silence-deprecation=if-function` flag to suppress Sass deprecation warnings.
+- **`generateReShorthandMap` duplicate `opacity-50`**: Removed duplicate `opacity-50: 0.5` shorthand entry since the loop already generates it for `o=50`. Added explicit zero-check for `opacity-0` to output `0` instead of `0/100`.
+- **`responsive:generate` scanning per-entry files**: Now filters out all `_responsive-autofill*.generated.scss` files during scanning, preventing generated files from being re-scanned.
+- **`dev:theme:auto` missing `responsive:generate:entries`**: Added `npm run scss-kit:responsive:generate:entries` step before starting watchers to ensure per-entry outputs are generated on startup.
+
+### Added
+
+- **`varScope` support for per-entry autofill**: `autofill.entries` items now accept `{ file, varScope }` object format in addition to plain string paths. When `varScope` is set (e.g. `".my-page"`), CSS custom properties (`--px-to-vw`, `--px-to-vw-mb`) are scoped to that selector instead of `:root`.
+- **`toScssMap` formatting**: SCSS maps now render with a newline after the opening parenthesis for improved readability.
+
+### Changed
+
+- Updated `schema.json` to support `oneOf: [string, { file, varScope }]` for `autofill.entries` items.
+- Synced template (`tools/create-scss-kit/template/`) and demo (`demo/`) copies.
+
 ## [0.6.0] - 2026-03-19
 
 ### Added

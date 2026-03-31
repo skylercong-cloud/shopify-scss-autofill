@@ -57,6 +57,23 @@
 - 顶部 `@use "./_responsive-autofill.<page>.generated" as auto;`
 - 底部 `@include auto.responsive_autofill_overrides();`（确保覆盖顺序）
 
+### varScope（可选）
+
+默认情况下，`--px-to-vw` 和 `--px-to-vw-mb` 变量声明在 `:root` 上。如果页面需要将变量作用域限定到特定选择器（例如 section 级别），可以在 `autofill.entries` 中使用对象格式：
+
+```json
+{
+  "autofill": {
+    "entries": [
+      "src/styles/page-a.scss",
+      { "file": "src/styles/page-b.scss", "varScope": ".page-b-wrapper" }
+    ]
+  }
+}
+```
+
+`page-b` 生成的 CSS 变量将挂载在 `.page-b-wrapper` 而非 `:root`。
+
 推荐约定：
 
 - 字体/需要下限兜底的值：使用 `r.resp(pc, mobile, desktopType[, mobileType])`

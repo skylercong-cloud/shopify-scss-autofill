@@ -9,7 +9,8 @@
 // - desktop: 1920
 // - mobile: 750
 
-$coef-mobile: (  h1: 0.5,
+$coef-mobile: (
+  h1: 0.5,
   h2: 0.625,
   h3: 0.75,
   body: 0.857,
@@ -21,7 +22,8 @@ $coef-mobile: (  h1: 0.5,
   icon: 0.67,
 );
 
-$coef-desktop: (  h1: 0.625,
+$coef-desktop: (
+  h1: 0.625,
   h2: 0.67,
   h3: 0.75,
   body: 0.875,
@@ -33,7 +35,8 @@ $coef-desktop: (  h1: 0.625,
   icon: 0.625,
 );
 
-$max-coef-mobile: (  h1: 1.5,
+$max-coef-mobile: (
+  h1: 1.5,
   h2: 1.5,
   h3: 1.5,
   h4: 1.5,
@@ -46,15 +49,19 @@ $max-coef-mobile: (  h1: 1.5,
 );
 
 $max-coef-desktop: (
+
 );
 
 $floor-mobile: (
+
 );
 
 $floor-desktop: (
+
 );
 
-$ceiling-mobile: (  h1: 48px,
+$ceiling-mobile: (
+  h1: 48px,
   h2: 42px,
   h3: 36px,
   h4: 30px,
@@ -67,6 +74,7 @@ $ceiling-mobile: (  h1: 48px,
 );
 
 $ceiling-desktop: (
+
 );
 
 $mobile-clamp-mode: min-first;
@@ -259,8 +267,138 @@ $mobile-clamp-mode: min-first;
 // re(): passthrough for non-dimension responsive values (color, display, background, etc.)
 // - PC: returns first arg unchanged.
 // - Mobile: scss-kit autofill scanner reads second arg and emits mobile override directly.
+// Shorthand mappings (expanded by scanner):
+//   grid-cols-N → repeat(N, 1fr)    grid-rows-N → repeat(N, 1fr)
+//   span-N → span N                 order-N → N
+//   opacity-N → N/100               z-N → N
 // Usage:  color: r.re(#fff, #000);   → PC: #fff, Mobile override: #000
 //         display: r.re(flex, none);
+//         grid-template-columns: r.re(grid-cols-4, grid-cols-2); → PC: repeat(4, 1fr), Mobile: repeat(2, 1fr)
+
+// Shorthand expansion map for r.re() (PC side).
+// The scanner expands the mobile side in JS; this map handles the PC side in SCSS.
+$_re-shorthands: (
+  grid-cols-1: repeat(1, 1fr),
+  cols-1: repeat(1, 1fr),
+  grid-rows-1: repeat(1, 1fr),
+  rows-1: repeat(1, 1fr),
+  span-1: span 1,
+  order-1: 1,
+  z-1: 1,
+  grid-cols-2: repeat(2, 1fr),
+  cols-2: repeat(2, 1fr),
+  grid-rows-2: repeat(2, 1fr),
+  rows-2: repeat(2, 1fr),
+  span-2: span 2,
+  order-2: 2,
+  z-2: 2,
+  grid-cols-3: repeat(3, 1fr),
+  cols-3: repeat(3, 1fr),
+  grid-rows-3: repeat(3, 1fr),
+  rows-3: repeat(3, 1fr),
+  span-3: span 3,
+  order-3: 3,
+  z-3: 3,
+  grid-cols-4: repeat(4, 1fr),
+  cols-4: repeat(4, 1fr),
+  grid-rows-4: repeat(4, 1fr),
+  rows-4: repeat(4, 1fr),
+  span-4: span 4,
+  order-4: 4,
+  z-4: 4,
+  grid-cols-5: repeat(5, 1fr),
+  cols-5: repeat(5, 1fr),
+  grid-rows-5: repeat(5, 1fr),
+  rows-5: repeat(5, 1fr),
+  span-5: span 5,
+  order-5: 5,
+  z-5: 5,
+  grid-cols-6: repeat(6, 1fr),
+  cols-6: repeat(6, 1fr),
+  grid-rows-6: repeat(6, 1fr),
+  rows-6: repeat(6, 1fr),
+  span-6: span 6,
+  order-6: 6,
+  z-6: 6,
+  grid-cols-7: repeat(7, 1fr),
+  cols-7: repeat(7, 1fr),
+  grid-rows-7: repeat(7, 1fr),
+  rows-7: repeat(7, 1fr),
+  span-7: span 7,
+  order-7: 7,
+  z-7: 7,
+  grid-cols-8: repeat(8, 1fr),
+  cols-8: repeat(8, 1fr),
+  grid-rows-8: repeat(8, 1fr),
+  rows-8: repeat(8, 1fr),
+  span-8: span 8,
+  order-8: 8,
+  z-8: 8,
+  grid-cols-9: repeat(9, 1fr),
+  cols-9: repeat(9, 1fr),
+  grid-rows-9: repeat(9, 1fr),
+  rows-9: repeat(9, 1fr),
+  span-9: span 9,
+  order-9: 9,
+  z-9: 9,
+  grid-cols-10: repeat(10, 1fr),
+  cols-10: repeat(10, 1fr),
+  grid-rows-10: repeat(10, 1fr),
+  rows-10: repeat(10, 1fr),
+  span-10: span 10,
+  order-10: 10,
+  z-10: 10,
+  grid-cols-11: repeat(11, 1fr),
+  cols-11: repeat(11, 1fr),
+  grid-rows-11: repeat(11, 1fr),
+  rows-11: repeat(11, 1fr),
+  span-11: span 11,
+  order-11: 11,
+  z-11: 11,
+  grid-cols-12: repeat(12, 1fr),
+  cols-12: repeat(12, 1fr),
+  grid-rows-12: repeat(12, 1fr),
+  rows-12: repeat(12, 1fr),
+  span-12: span 12,
+  order-12: 12,
+  z-12: 12,
+  gap-0: 0px,
+  gap-2: 2px,
+  gap-4: 4px,
+  gap-8: 8px,
+  gap-10: 10px,
+  gap-12: 12px,
+  gap-16: 16px,
+  gap-20: 20px,
+  gap-24: 24px,
+  gap-32: 32px,
+  gap-40: 40px,
+  gap-48: 48px,
+  gap-60: 60px,
+  gap-80: 80px,
+  opacity-0: 0,
+  opacity-10: 0.1,
+  opacity-20: 0.2,
+  opacity-30: 0.3,
+  opacity-40: 0.4,
+  opacity-50: 0.5,
+  opacity-60: 0.6,
+  opacity-70: 0.7,
+  opacity-80: 0.8,
+  opacity-90: 0.9,
+  opacity-100: 1,
+  opacity-5: 0.05,
+  opacity-25: 0.25,
+  opacity-75: 0.75,
+);
+
+@function _expand-re($val) {
+  @if meta.type-of($val) == string and map.has-key($_re-shorthands, $val) {
+    @return map.get($_re-shorthands, $val);
+  }
+  @return $val;
+}
+
 @function re($pc-val, $mobile-val: null) {
-  @return $pc-val;
+  @return _expand-re($pc-val);
 }
