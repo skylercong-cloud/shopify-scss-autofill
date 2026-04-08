@@ -1621,15 +1621,16 @@ function main() {
         JSON.stringify(
           {
             action: 'responsive:generate:entries',
-            ok: false,
+            ok: true,
+            skipped: true,
             reason:
-              'missing autofill.entries in scss-kit.config.json (expected array of entry scss paths)',
+              'autofill.entries is empty — nothing to generate. Create .scss files in src/styles/ and the responsive:watch watcher will register them automatically.',
           },
           null,
           2
         )
       )
-      process.exit(1)
+      process.exit(0)
     }
 
     // Load incremental cache

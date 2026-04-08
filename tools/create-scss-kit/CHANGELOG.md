@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.3] - 2026-04-08
+
+### Fixed
+
+- **`responsive:generate:entries` crashes on empty `entries`**: When `autofill.entries` is an empty array (typical on a fresh project before any `.scss` files are created), the command previously exited with code 1, breaking the `&&` chain in `dev:theme:auto` and preventing the `responsive:watch` watcher from ever starting. The watcher is responsible for auto-registering new files into `entries`, so this created a deadlock. Now exits with code 0 (`ok: true, skipped: true`) when entries is empty.
+
 ## [0.6.0] - 2026-03-19
 
 ### Added
