@@ -49,15 +49,12 @@ $max-coef-mobile: (
 );
 
 $max-coef-desktop: (
-
 );
 
 $floor-mobile: (
-
 );
 
 $floor-desktop: (
-
 );
 
 $ceiling-mobile: (
@@ -74,7 +71,6 @@ $ceiling-mobile: (
 );
 
 $ceiling-desktop: (
-
 );
 
 $mobile-clamp-mode: min-first;
@@ -84,47 +80,58 @@ $mobile-clamp-mode: min-first;
 }
 
 @function _to-num($value) {
-  @if meta.type-of($value) != number {
+  @if meta.type-of($value) !=number {
     @error "Expected a number, got: #{meta.type-of($value)}";
   }
+
   @if math.is-unitless($value) {
     @return $value;
   }
-  @if math.unit($value) != 'px' {
+
+  @if math.unit($value) !='px' {
     @error "Expected px or unitless number, got: #{math.unit($value)}";
   }
+
   @return math.div($value, 1px);
 }
 
 @function coef($type, $range: mobile) {
-  $table: if($range == desktop, $coef-desktop, $coef-mobile);
+  $table: if($range ==desktop, $coef-desktop, $coef-mobile);
+
   @if map.has-key($table, $type) {
     @return map.get($table, $type);
   }
+
   @error "Unknown coef type: #{$type}";
 }
 
 @function max_coef($type, $range: mobile) {
-  $table: if($range == desktop, $max-coef-desktop, $max-coef-mobile);
+  $table: if($range ==desktop, $max-coef-desktop, $max-coef-mobile);
+
   @if map.has-key($table, $type) {
     @return map.get($table, $type);
   }
+
   @return null;
 }
 
 @function _floor($type, $range: mobile) {
-  $table: if($range == desktop, $floor-desktop, $floor-mobile);
+  $table: if($range ==desktop, $floor-desktop, $floor-mobile);
+
   @if map.has-key($table, $type) {
     @return map.get($table, $type);
   }
+
   @return null;
 }
 
 @function _ceiling($type, $range: mobile) {
-  $table: if($range == desktop, $ceiling-desktop, $ceiling-mobile);
+  $table: if($range ==desktop, $ceiling-desktop, $ceiling-mobile);
+
   @if map.has-key($table, $type) {
     @return map.get($table, $type);
   }
+
   @return null;
 }
 
@@ -134,21 +141,25 @@ $mobile-clamp-mode: min-first;
   $v: _to-px($value);
 
   // 直接传数字系数：跳过类型表，直接以系数计算
-  @if meta.type-of($type) == number {
+  @if meta.type-of($type)==number {
     $min: $v * $type;
-    @if $override-floor != null {
+
+    @if $override-floor !=null {
       @return math.max($min, _to-px($override-floor));
     }
+
     @return $min;
   }
 
-  $c: if($override-coef == null, coef($type, $range), $override-coef);
+  $c: if($override-coef ==null, coef($type, $range), $override-coef);
   $min: $v * $c;
 
-  $f: if($override-floor != null, _to-px($override-floor), _floor($type, $range));
+  $f: if($override-floor !=null, _to-px($override-floor), _floor($type, $range));
+
   @if $f {
     @return math.max($min, $f);
   }
+
   @return $min;
 }
 
@@ -159,40 +170,51 @@ $mobile-clamp-mode: min-first;
 @function max_px($value, $type, $range: mobile, $override-coef: null, $override-ceiling: null) {
   $v: _to-px($value);
 
-  @if meta.type-of($type) == number {
-    @if $type <= 0 {
+  @if meta.type-of($type)==number {
+    @if $type <=0 {
       @error "max_px() expects positive coefficient when type is number";
     }
+
     $max: $v * $type;
-    @if $override-ceiling != null {
+
+    @if $override-ceiling !=null {
       @return math.min($max, _to-px($override-ceiling));
     }
+
     @return $max;
   }
 
-  $mc: if($override-coef == null, max_coef($type, $range), $override-coef);
-  @if $mc != null {
-    @if $mc <= 0 {
+  $mc: if($override-coef ==null, max_coef($type, $range), $override-coef);
+
+  @if $mc !=null {
+    @if $mc <=0 {
       @error "max_px() expects positive max coefficient for type: #{$type}";
     }
+
     $max: $v * $mc;
-    $ceil: if($override-ceiling != null, _to-px($override-ceiling), _ceiling($type, $range));
+    $ceil: if($override-ceiling !=null, _to-px($override-ceiling), _ceiling($type, $range));
+
     @if $ceil {
       @return math.min($max, $ceil);
     }
+
     @return $max;
   }
 
   $c: coef($type, $range);
-  @if $c <= 0 {
+
+  @if $c <=0 {
     @error "max_px() expects positive coefficient for fallback type: #{$type}";
   }
+
   $max: math.div($v, $c);
 
-  $ceil: if($override-ceiling != null, _to-px($override-ceiling), _ceiling($type, $range));
+  $ceil: if($override-ceiling !=null, _to-px($override-ceiling), _ceiling($type, $range));
+
   @if $ceil {
     @return math.min($max, $ceil);
   }
+
   @return $max;
 }
 
@@ -205,23 +227,35 @@ $mobile-clamp-mode: min-first;
 
 // 生成移动段 clamp：min + calc(mobile * var(--px-to-vw-mb)) + max
 @function clamp_mb($mobile, $min, $max: null) {
-  $v: if($max == null, _to-px($mobile), _to-px($max));
+  $v: if($max ==null, _to-px($mobile), _to-px($max));
   $n: _to-num($mobile);
   @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw-mb)), #{$v});
 }
 
 // 移动段响应式输出策略：
-// - min-first: 传统逻辑（按系数推导 min）
-// - max-first: 小设计稿逻辑（设计值作为 min，按系数推导 max）
-// - dual-bound: 中等设计稿（500-600）逻辑，双向边界 clamp(min, fluid, max)
+// - min-first: 传统逻辑（按系数推导 min），以设计稿值为 min 上限兜底
+// - max-first: 小设计稿逻辑（设计值作为 min），以设计稿值为 max 下限兜底
+// - dual-bound: 中等设计稿（500-600）逻辑，双向边界均以设计稿值兜底
 @function resp_mb($mobile, $type) {
-  @if $mobile-clamp-mode == max-first {
-    @return clamp_mb($mobile, $mobile, max_px($mobile, $type, mobile));
+  $v: _to-px($mobile);
+
+  @if $mobile-clamp-mode ==max-first {
+    $raw-max: max_px($mobile, $type, mobile);
+    $eff-max: math.max($raw-max, $v);
+    @return clamp_mb($mobile, $mobile, $eff-max);
   }
-  @if $mobile-clamp-mode == dual-bound {
-    @return clamp_mb($mobile, min_px($mobile, $type, mobile), max_px($mobile, $type, mobile));
+
+  @if $mobile-clamp-mode ==dual-bound {
+    $raw-min: min_px($mobile, $type, mobile);
+    $raw-max: max_px($mobile, $type, mobile);
+    $eff-min: math.min($raw-min, $v);
+    $eff-max: math.max($raw-max, $v);
+    @return clamp_mb($mobile, $eff-min, $eff-max);
   }
-  @return clamp_mb($mobile, min_px($mobile, $type, mobile));
+
+  $raw-min: min_px($mobile, $type, mobile);
+  $eff-min: math.min($raw-min, $v);
+  @return clamp_mb($mobile, $eff-min);
 }
 
 // 直接输出 PC 段 vw，并用设计稿 px 做上限兜底。
@@ -247,9 +281,10 @@ $mobile-clamp-mode: min-first;
 // - PC: min(vw, px)
 // - Mobile: 纯 vw（通过 autofill 覆盖生成）
 @function vw($pc, $mobile) {
-  @if meta.type-of($pc) != number or meta.type-of($mobile) != number {
+  @if meta.type-of($pc) !=number or meta.type-of($mobile) !=number {
     @error "vw() expects numeric px values for both pc and mobile";
   }
+
   @return vw_pc($pc);
 }
 
@@ -258,10 +293,14 @@ $mobile-clamp-mode: min-first;
 // - arg4 (optional): mobile type, defaults to desktop type
 // Keep both types in source so scss-kit autofill scanner can emit mobile overrides.
 @function resp($pc, $mobile, $type, $mobile-type: null) {
-  @if meta.type-of($pc) != number {
+  @if meta.type-of($pc) !=number {
     @error "resp() expects a number (px) for pc value";
   }
-  @return clamp_pc($pc, min_px($pc, $type, desktop));
+
+  $v: _to-px($pc);
+  $raw-min: min_px($pc, $type, desktop);
+  $eff-min: math.min($raw-min, $v);
+  @return clamp_pc($pc, $eff-min);
 }
 
 // re(): passthrough for non-dimension responsive values (color, display, background, etc.)
@@ -393,9 +432,10 @@ $_re-shorthands: (
 );
 
 @function _expand-re($val) {
-  @if meta.type-of($val) == string and map.has-key($_re-shorthands, $val) {
+  @if meta.type-of($val)==string and map.has-key($_re-shorthands, $val) {
     @return map.get($_re-shorthands, $val);
   }
+
   @return $val;
 }
 

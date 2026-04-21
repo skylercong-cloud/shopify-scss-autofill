@@ -2,7 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.6.3] - 2026-04-08
+## [0.6.4] - 2026-04-21
+
+### Fixed
+
+- **`resp()` / `resp_mb()` invalid clamp ranges due to floor/ceiling overflow**: Added design-value safety guards to both PC and mobile clamp functions. `resp()` now applies `eff-min = math.min(min_px(pc), $v)` to prevent desktop floor from exceeding the PC design value. `resp_mb()` applies matching `eff-min`/`eff-max` anchors across all three mobile modes (`min-first`, `max-first`, `dual-bound`).
 
 ### Fixed
 

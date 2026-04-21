@@ -4,7 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
-## [0.6.3] - 2026-04-08
+## [0.6.4] - 2026-04-21
+
+### Fixed
+
+- **`resp()` / `resp_mb()` invalid clamp ranges due to floor/ceiling overflow**: When `floors.desktop` was configured higher than the PC design value, `min_px()` could return a value greater than `$pc`, producing an invalid `clamp(min > max, fluid, pc)`. Symmetrically, on mobile, `ceilings.mobile` could truncate `max_px()` below the design value. Both `resp()` and `resp_mb()` now clamp the computed boundaries against the design value as a safety anchor:
+  - `resp()` (PC): `eff-min = math.min(min_px(pc, type, desktop), $v)` — ensures `min ≤ design value`
+  - `resp_mb()` (Mobile): `eff-min = math.min(raw-min, $v)` and `eff-max = math.max(raw-max, $v)` — ensures `min ≤ design value ≤ max`
+  - All three mobile modes (`min-first`, `max-first`, `dual-bound`) are protected.
+  - `min_px()` / `max_px()` themselves are unchanged; the guard is applied only at the call sites in `resp()` and `resp_mb()`.
 
 ### Fixed
 

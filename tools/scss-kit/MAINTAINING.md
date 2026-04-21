@@ -10,6 +10,9 @@
 - 响应式：PC + Mobile 双设计稿，通过 `r.resp(pc, mobile, desktopType[, mobileType])` 埋点 + 自动生成移动端覆盖。
 - 小稿策略：当 `design.mobileWidth < responsive.smallMobileThreshold`（默认 `400`）时，`mobileClampMode=auto` 会切到 `max-first`，让小稿按上限增长而不是过早封顶。
 - 中稿策略：当 `design.mobileWidth` 落在 `responsive.dualClampMinWidth ~ responsive.dualClampMaxWidth`（默认 `500~600`）时，`mobileClampMode=auto` 会切到 `dual-bound`，用一条 `clamp(min, fluid, max)` 同时约束小屏下限与大屏上限。
+- **设计稿安全防护**：`resp()` 和 `resp_mb()` 均将内部计算的 raw min/max 与设计稿原值对齐，防止 floor/ceiling 配置过大/过小导致 clamp 区间非法：
+  - `resp()`：`eff-min = math.min(min_px(pc), pc)` — 保证 min 不超过 PC 设计稿值
+  - `resp_mb()`：`eff-min = math.min(min_px(mb), mb)`，`eff-max = math.max(max_px(mb), mb)` — 双向安全兜底
 
 ## 关键约束（不要破坏）
 

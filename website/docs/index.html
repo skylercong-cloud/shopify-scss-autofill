@@ -1155,7 +1155,10 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
                   业务主函数（字体/需兜底）：PC 输出
                   <span class="code">clamp</span>；Mobile 由扫描器生成
                   <span class="code">resp_mb(...)</span> 覆盖；第 3/4
-                  参数分别控制 PC/Mobile type。
+                  参数分别控制 PC/Mobile type。 内置设计稿安全防护：<span
+                    class="code"
+                    >eff-min = math.min(min_px, pc)</span
+                  >， 保证 floor 过大时 min 不会超过设计稿值。
                 </div>
               </div>
               <div class="row">
@@ -1258,6 +1261,11 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
                   <span class="code">min-first</span> 或
                   <span class="code">max-first</span> 或
                   <span class="code">dual-bound</span>。
+                  内置设计稿安全防护：<span class="code"
+                    >eff-min = math.min(raw-min, mb)</span
+                  >、
+                  <span class="code">eff-max = math.max(raw-max, mb)</span>，
+                  保证 floor/ceiling 不会导致 clamp 区间非法。
                 </div>
               </div>
               <div class="row">

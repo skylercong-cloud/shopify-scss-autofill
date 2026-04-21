@@ -1083,17 +1083,29 @@ $mobile-clamp-mode: ${responsive.resolvedMobileClampMode};
 }
 
 // 移动段响应式输出策略：
-// - min-first: 传统逻辑（按系数推导 min）
-// - max-first: 小设计稿逻辑（设计值作为 min，按系数推导 max）
-// - dual-bound: 中等设计稿（500-600）逻辑，双向边界 clamp(min, fluid, max)
+// - min-first: 传统逻辑（按系数推导 min），以设计稿值为 min 上限兜底
+// - max-first: 小设计稿逻辑（设计值作为 min），以设计稿值为 max 下限兜底
+// - dual-bound: 中等设计稿（500-600）逻辑，双向边界均以设计稿值兜底
 @function resp_mb($mobile, $type) {
+  $v: _to-px($mobile);
+
   @if $mobile-clamp-mode == max-first {
-    @return clamp_mb($mobile, $mobile, max_px($mobile, $type, mobile));
+    $raw-max: max_px($mobile, $type, mobile);
+    $eff-max: math.max($raw-max, $v);
+    @return clamp_mb($mobile, $mobile, $eff-max);
   }
+
   @if $mobile-clamp-mode == dual-bound {
-    @return clamp_mb($mobile, min_px($mobile, $type, mobile), max_px($mobile, $type, mobile));
+    $raw-min: min_px($mobile, $type, mobile);
+    $raw-max: max_px($mobile, $type, mobile);
+    $eff-min: math.min($raw-min, $v);
+    $eff-max: math.max($raw-max, $v);
+    @return clamp_mb($mobile, $eff-min, $eff-max);
   }
-  @return clamp_mb($mobile, min_px($mobile, $type, mobile));
+
+  $raw-min: min_px($mobile, $type, mobile);
+  $eff-min: math.min($raw-min, $v);
+  @return clamp_mb($mobile, $eff-min);
 }
 
 // 直接输出 PC 段 vw，并用设计稿 px 做上限兜底。
@@ -1133,7 +1145,10 @@ $mobile-clamp-mode: ${responsive.resolvedMobileClampMode};
   @if meta.type-of($pc) != number {
     @error "resp() expects a number (px) for pc value";
   }
-  @return clamp_pc($pc, min_px($pc, $type, desktop));
+  $v: _to-px($pc);
+  $raw-min: min_px($pc, $type, desktop);
+  $eff-min: math.min($raw-min, $v);
+  @return clamp_pc($pc, $eff-min);
 }
 
 // re(): passthrough for non-dimension responsive values (color, display, background, etc.)
