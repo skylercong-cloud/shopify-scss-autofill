@@ -6,7 +6,7 @@
     <title>shopify-scss-autofill</title>
     <meta
       name="description"
-      content="面向 Shopify Theme Kit 的 SCSS 工具链：安全编译 CSS + r.resp / r.vw / r.re 自动生成移动端覆盖（per-entry）。"
+      content="面向 Shopify Theme Kit 的 SCSS 工具链：安全编译 CSS，自动生成 per-entry 移动端覆盖，并联动 Theme Kit 上传。"
     />
     <link
       rel="icon"
@@ -26,7 +26,7 @@
           />
           <span>shopify-scss-autofill</span>
         </a>
-        <nav class="nav">
+        <nav class="nav" aria-label="主导航">
           <a class="nav__link is-active" href="./">首页</a>
           <a class="nav__link" href="./docs/">文档</a>
           <a
@@ -48,208 +48,92 @@
     </header>
 
     <main>
-      <section class="hero">
-        <div class="container">
-          <div class="hero__layout">
-            <div class="hero__content">
-              <h1 class="hero__title">
-                面向 Shopify Theme Kit 的
-                <span class="text-gradient">SCSS 工具链</span>
-              </h1>
-              <p class="hero__subtitle">
-                易上手、稳定、可扩展：为日常页面开发提供更顺滑的“写样式 → 编译 →
-                上传”体验。
-              </p>
-
-              <div class="hero__cta">
-                <a class="btn btn--primary" href="./docs/#quick-start"
-                  >Quick Start</a
-                >
-              </div>
-            </div>
+      <section class="hero hero--home">
+        <div class="container hero__inner">
+          <h1 class="hero__title">
+            面向 Shopify Theme Kit 的
+            <span class="text-gradient">SCSS 工具链</span>
+          </h1>
+          <p class="hero__subtitle">
+            易上手、稳定、可扩展：为日常页面开发提供更顺滑的“写样式 → 编译 →
+            上传”体验。
+          </p>
+          <div class="hero__cta" aria-label="主要操作">
+            <a class="btn btn--primary" href="./docs/#quick-start"
+              >Quick Start</a
+            >
+            <a
+              class="btn"
+              href="https://github.com/skylercong-cloud/shopify-scss-autofill"
+              target="_blank"
+              rel="noreferrer"
+              >GitHub</a
+            >
           </div>
         </div>
       </section>
 
-      <section class="section">
+      <section class="section section--features" aria-label="核心能力">
         <div class="container">
-          <div class="grid">
-            <div class="card">
+          <div class="feature-grid">
+            <article class="card feature-card">
+              <span class="card__meta">01</span>
               <h3>开箱即用</h3>
-              <p>一步接入工具链与默认配置。</p>
-            </div>
-            <div class="card">
+              <p>一条初始化命令接入工具链、默认配置、脚本和示例结构。</p>
+            </article>
+            <article class="card feature-card">
+              <span class="card__meta">02</span>
               <h3>一键启动</h3>
-              <p>集成生成器、编译、与Theme Kit命令。</p>
-            </div>
-            <div class="card">
-              <h3>自由配置</h3>
-              <p>根据设计稿灵活配置。</p>
-            </div>
-            <div class="card">
-              <h3>安全策略</h3>
-              <p>相对保守的修改策略，较低的误删、误修改风险。</p>
-            </div>
-            <div class="card">
-              <h3>基于SCSS编译</h3>
-              <p>流畅、简洁、灵活的开发体验。</p>
-            </div>
-            <div class="card">
-              <h3>良好的适配性</h3>
-              <p>适配三种不同的移动端设计稿。</p>
-            </div>
+              <p>联动响应式生成、Sass 编译、安全同步和 Theme Kit watch。</p>
+            </article>
+            <article class="card feature-card">
+              <span class="card__meta">03</span>
+              <h3>per-entry 覆盖</h3>
+              <p>为每个入口生成独立移动端覆盖文件，降低页面之间互相污染的风险。</p>
+            </article>
+            <article class="card feature-card">
+              <span class="card__meta">04</span>
+              <h3>安全写入策略</h3>
+              <p>默认通过 marker 与 .new 兜底保护旧 CSS，减少误覆盖历史文件。</p>
+            </article>
+            <article class="card feature-card">
+              <span class="card__meta">05</span>
+              <h3>SCSS 组织体验</h3>
+              <p>入口、partial、变量与函数可以按组件和页面拆分维护。</p>
+            </article>
+            <article class="card feature-card">
+              <span class="card__meta">06</span>
+              <h3>多设计稿适配</h3>
+              <p>支持 750、590、375 等移动端设计稿对应的 clamp 策略。</p>
+            </article>
           </div>
         </div>
       </section>
 
-      <section class="section section--alt">
+      <section class="section section--showcase" aria-labelledby="demo-title">
         <div class="container">
-          <div class="split">
-            <div class="card">
-              <div class="card__head">
-                <svg
-                  class="icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M8 5H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h2"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                  />
-                  <path
-                    d="M16 5h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                  />
-                  <path
-                    d="M10 9l-2 3 2 3"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <path
-                    d="M14 9l2 3-2 3"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-                <h3>你写的 SCSS</h3>
-              </div>
-              <div
-                class="codeblock codeblock--terminal"
-                role="region"
-                aria-label="SCSS example"
-              >
-                <pre><code>.hero {
-  padding: r.vw(60px, 32px);
-  background: r.re(#1a1a2e, #f5f5f5);
-}
+          <div class="section__head section__head--center section__head--simple">
+            <h2 id="demo-title">DEMO演示</h2>
+          </div>
 
-.hero__title {
-  font-size: r.resp(56px, 28px, h1, h2);
-}
-
-.hero__desc {
-  margin-top: r.vw(24px, 12px);
-  color: r.re(rgba(255,255,255,0.8), #333);
-}
-
-.hero__grid {
-  display: r.re(grid, flex);
-  grid-template-columns: r.re(grid-cols-3, grid-cols-1);
-  gap: r.vw(32px, 16px);
-}</code></pre>
-              </div>
+          <div class="demo-shell">
+            <div class="demo-shell__bar" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
             </div>
-
-            <div class="card">
-              <div class="card__head">
-                <svg
-                  class="icon"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M8 7h8"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                  />
-                  <path
-                    d="M8 12h8"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                  />
-                  <path
-                    d="M8 17h6"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linecap="round"
-                  />
-                  <path
-                    d="M6 4h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H9l-3 2v-2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"
-                    stroke="currentColor"
-                    stroke-width="1.6"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-                <h3>生成的覆盖（示意）</h3>
-              </div>
-              <div
-                class="codeblock codeblock--terminal"
-                role="region"
-                aria-label="Generated example"
-              >
-                <pre><code>/* PC output */
-.hero {
-  padding: min(calc(60 * var(--px-to-vw)), 60px);
-  background: #1a1a2e;
-}
-.hero__title {
-  font-size: clamp(39.2px, calc(56 * var(--px-to-vw)), 56px);
-}
-.hero__desc {
-  margin-top: min(calc(24 * var(--px-to-vw)), 24px);
-  color: rgba(255,255,255,0.8);
-}
-.hero__grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: min(calc(32 * var(--px-to-vw)), 32px);
-}
-
-/* Mobile overrides (autofill generated) */
-@media (max-width: 850px) {
-  .hero {
-    padding: calc(32 * var(--px-to-vw-mb));
-    background: #f5f5f5;
-  }
-  .hero__title {
-    font-size: clamp(16.8px, calc(28 * var(--px-to-vw-mb)), 28px);
-  }
-  .hero__desc {
-    margin-top: calc(12 * var(--px-to-vw-mb));
-    color: #333;
-  }
-  .hero__grid {
-    display: flex;
-    grid-template-columns: repeat(1, 1fr);
-    gap: calc(16 * var(--px-to-vw-mb));
-  }
-}</code></pre>
-              </div>
-            </div>
+            <video
+              class="demo-video"
+              controls
+              preload="metadata"
+              playsinline
+            >
+              <source
+                src="./videos/shopify-scss-autofill-demo.mp4"
+                type="video/mp4"
+              />
+              你的浏览器不支持视频播放。
+            </video>
           </div>
         </div>
       </section>
@@ -258,14 +142,14 @@
     <footer class="footer">
       <div class="container footer__inner">
         <span>MIT License</span>
-        <span class="footer__sep">·</span>
+        <span class="footer__sep">/</span>
         <a
           href="https://github.com/skylercong-cloud/shopify-scss-autofill"
           target="_blank"
           rel="noreferrer"
           >GitHub</a
         >
-        <span class="footer__sep">·</span>
+        <span class="footer__sep">/</span>
         <a href="./docs/">Docs</a>
       </div>
     </footer>
