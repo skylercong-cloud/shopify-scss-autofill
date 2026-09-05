@@ -79,7 +79,6 @@ test('generate fills default readable and dense profiles when omitted', () => {
   assert.match(output, /min: 0\.5/)
   assert.doesNotMatch(output, /\$floor-|\$ceiling-|\$max-coef|MOBILE_PROFILE/)
 })
-
 test('legacy responsive coefficient fields fail with a migration error', () => {
   const legacyConfigs = [
     { maxCoefficients: {} },
@@ -100,7 +99,6 @@ test('legacy responsive coefficient fields fail with a migration error', () => {
     )
   }
 })
-
 test('fixedCore emits a desktop unit override in generated autofill output', () => {
   const { root } = projectWith({
     fixedCore: { breakpoint: 1500, width: 1200 },
@@ -222,4 +220,3 @@ test('missing configured entries are pending and do not fail startup generation'
     reason: 'file not found',
   })
 })
-
