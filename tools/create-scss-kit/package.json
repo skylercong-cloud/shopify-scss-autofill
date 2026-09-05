@@ -17,8 +17,8 @@
     "node": ">=18"
   },
   "bin": {
-    "create-shopify-scss-autofill": "./bin/create-scss-kit.mjs",
-    "create-scss-kit": "./bin/create-scss-kit.mjs"
+    "create-shopify-scss-autofill": "bin/create-scss-kit.mjs",
+    "create-scss-kit": "bin/create-scss-kit.mjs"
   },
   "scripts": {
     "sync-template": "node ./scripts/sync-template.mjs",
