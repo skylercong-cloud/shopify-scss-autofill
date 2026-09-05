@@ -139,7 +139,7 @@ npm run dev:theme:auto</code></pre>
               <li>
                 移动端覆盖：从
                 <span class="code"
-                  >r.resp(pc, mobile, desktopType[, mobileType])</span
+                  >r.resp(pc, mobile[, profile[, mobileProfile]])</span
                 >
                 自动生成 per-entry 覆盖文件
               </li>
@@ -199,7 +199,7 @@ npm run dev:theme:auto</code></pre>
             <p>
               你在 SCSS 里写
               <span class="code"
-                >r.resp(pc, mobile, desktopType[, mobileType])</span
+                >r.resp(pc, mobile[, profile[, mobileProfile]])</span
               >
               来表达“同一语义的 PC / Mobile 值”。
               工具会扫描这些调用并为每个入口生成移动端覆盖（per-entry），而最终上传到
@@ -222,7 +222,7 @@ npm run dev:theme:auto</code></pre>
                 <p>
                   扫描
                   <span class="code"
-                    >r.resp(pc, mobile, desktopType[, mobileType])</span
+                    >r.resp(pc, mobile[, profile[, mobileProfile]])</span
                   >
                   与 <span class="code">r.vw(pc, mobile)</span>，生成 per-entry
                   覆盖文件。
@@ -247,9 +247,20 @@ npm run dev:theme:auto</code></pre>
             <p>
               入口文件通常需要在顶部引入生成文件，并在末尾追加覆盖（保证覆盖顺序）。
             </p>
+            <p>
+              当 <span class="code">dev:theme:auto</span> 正在运行时，新建且内容为空的入口
+              SCSS 会由 watcher 自动补齐完整 boilerplate：两条
+              <span class="code">@use</span> 之后写入 14 组共享 MiSans/Rany
+              <span class="code">@font-face</span>，最后写入 generated override include。
+              所有字体均使用 Shopify CDN 地址和
+              <span class="code">font-display: swap</span>；已有内容的非空文件不会被改写。
+            </p>
             <div class="codeblock">
               <pre><code>/* src/styles/&lt;page&gt;.scss */
+@use "./responsive" as r;
 @use "./_responsive-autofill.&lt;page&gt;.generated" as auto;
+
+/* 14 组 MiSans/Rany @font-face 会自动写在这里 */
 
 /* ...你的样式... */
 
@@ -355,653 +366,92 @@ npm run dev:theme:auto</code></pre>
           <section id="mobile-min" class="doc-section">
             <h2>最值生成规则</h2>
             <p class="muted">
-              这个规则来自生成后的 <span class="code">_responsive.scss</span>
+              <span class="code">r.resp()</span> 不再读取元素分类表，也不再使用绝对
+              floor/ceiling。每个 profile 只包含 <span class="code">min</span> 和
+              <span class="code">max</span> 两个系数，边界直接由设计值乘以系数得到。
             </p>
 
-            <h3 class="doc-subhead">统一规则：系数 + 绝对兜底</h3>
-            <ul class="list">
-              <li>
-                对命名 type（如
-                <span class="code">h1/body/button-text</span>）使用：
-                <span class="code"
-                  >max(designPx * coef(type), floor(type))</span
-                >
-              </li>
-              <li>
-                <span class="code">coef</span> 来自
-                <span class="code">coefficients.mobile/desktop</span>
-              </li>
-              <li>
-                <span class="code">floor</span> 来自
-                <span class="code">floors.mobile/desktop</span>
-              </li>
-              <li>
-                如果你把 <span class="code">type</span> 直接写成数字（例如
-                <span class="code">0.6</span>），则直接按该系数计算，跳过 type
-                表查询。
-              </li>
-            </ul>
-
-            <h3 class="doc-subhead">移动端三种设计稿方案（750 / 590 / 375）</h3>
-            <p class="muted">
-              现在移动端不只有“最小值规则”。根据
-              <span class="code">design.mobileWidth</span>，工具会选择不同的
-              <span class="code">mobileClampMode</span> 策略。
-            </p>
             <div class="table table--four">
               <div class="row">
-                <div class="cell cmd">设计稿</div>
-                <div class="cell">推荐模式</div>
-                <div class="cell">核心规则</div>
-                <div class="cell">配置建议</div>
+                <div class="cell cmd">配置项</div>
+                <div class="cell">默认 min</div>
+                <div class="cell">默认 max</div>
+                <div class="cell">适用场景</div>
               </div>
               <div class="row">
-                <div class="cell cmd">750</div>
-                <div class="cell"><span class="code">min-first</span></div>
-                <div class="cell">
-                  <span class="code">clamp(min, fluid, design)</span>，最小值由
-                  <span class="code">min_px()</span> 推导。
-                </div>
-                <div class="cell">
-                  重点维护
-                  <span class="code">coefficients.mobile</span> +
-                  <span class="code">floors.mobile</span>。
-                </div>
+                <div class="cell cmd">coefficients.readable</div>
+                <div class="cell">0.625</div>
+                <div class="cell">1.5</div>
+                <div class="cell">标题、段落和空间充足的阅读内容</div>
               </div>
               <div class="row">
-                <div class="cell cmd">590</div>
-                <div class="cell"><span class="code">dual-bound</span></div>
-                <div class="cell">
-                  <span class="code">clamp(min, fluid, max)</span
-                  >，同时约束最小值与最大值。
-                </div>
-                <div class="cell">
-                  同时配置
-                  <span class="code">floors.mobile</span> 与
-                  <span class="code">maxCoefficients.mobile</span> +
-                  <span class="code">ceilings.mobile</span>。
-                </div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">375</div>
-                <div class="cell"><span class="code">max-first</span></div>
-                <div class="cell">
-                  <span class="code">clamp(design, fluid, max)</span
-                  >，以设计值为下限，避免小稿过小。
-                </div>
-                <div class="cell">
-                  重点配置
-                  <span class="code">maxCoefficients.mobile</span> +
-                  <span class="code">ceilings.mobile</span>。
-                </div>
-              </div>
-            </div>
-
-            <h3 class="doc-subhead">auto 模式判定规则</h3>
-            <ul class="list">
-              <li>
-                当 <span class="code">design.mobileWidth &lt; 400</span> 时：
-                <span class="code">max-first</span>（典型 375）。
-              </li>
-              <li>
-                当
-                <span class="code">500 &lt;= design.mobileWidth &lt;= 600</span>
-                时：<span class="code">dual-bound</span>（典型 590）。
-              </li>
-              <li>
-                其他情况：<span class="code">min-first</span>（典型 750）。
-              </li>
-            </ul>
-
-            <h3 class="doc-subhead">对比示例代码（同一 mobile 值）</h3>
-            <p class="muted">
-              下面以同一个声明
-              <span class="code">r.resp(56px, 26px, h1)</span>
-              为例，展示在三种移动端设计稿下的核心差异（示意）。
-            </p>
-            <div
-              class="codeblock"
-              role="region"
-              aria-label="mobile clamp compare"
-            >
-              <pre><code>// Source SCSS
-font-size: r.resp(56px, 26px, h1);
-
-// 750 design / min-first
-// => clamp(min_px(26px), fluid(26), 26px)
-font-size: clamp(24px, calc(26 * var(--px-to-vw-mb)), 26px);
-
-// 590 design / dual-bound
-// => clamp(min_px(26px), fluid(26), max_px(26px))
-font-size: clamp(24px, calc(26 * var(--px-to-vw-mb)), 39px);
-
-// 375 design / max-first
-// => clamp(26px, fluid(26), max_px(26px))
-font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
-            </div>
-
-            <h3 class="doc-subhead">响应式字体大小最佳实践配置表</h3>
-            <p class="muted">
-              建议“字体用 <span class="code">r.resp</span>，间距优先用
-              <span class="code">r.vw</span>；少量间距需下限时再改为
-              <span class="code">r.resp</span>”。
-            </p>
-
-            <h3 class="doc-subhead">PC端</h3>
-            <div class="table table--four">
-              <div class="row">
-                <div class="cell cmd">元素类型</div>
-                <div class="cell">系数</div>
-                <div class="cell">绝对兜底值</div>
-                <div class="cell">说明</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd"><b>标题类</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H1</div>
-                <div class="cell">0.55-0.6</div>
-                <div class="cell">28px</div>
-                <div class="cell">主标题，保持视觉冲击力</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H2</div>
-                <div class="cell">0.6</div>
-                <div class="cell">22px</div>
-                <div class="cell">次级标题</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H3</div>
-                <div class="cell">0.6</div>
-                <div class="cell">18px</div>
-                <div class="cell">三级标题</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H4</div>
-                <div class="cell">0.6</div>
-                <div class="cell">16px</div>
-                <div class="cell">四级标题</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H5/H6</div>
-                <div class="cell">0.65</div>
-                <div class="cell">14px</div>
-                <div class="cell">小标题</div>
-              </div>
-
-              <div class="row">
-                <div class="cell cmd"><b>正文类</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">Body/段落</div>
-                <div class="cell">0.65</div>
-                <div class="cell">14px</div>
-                <div class="cell">主要阅读内容</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">小字/辅助文字</div>
-                <div class="cell">0.65</div>
-                <div class="cell">12px</div>
-                <div class="cell">如注释、说明</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">引用文字</div>
-                <div class="cell">0.6</div>
-                <div class="cell">16px</div>
-                <div class="cell">blockquote</div>
-              </div>
-
-              <div class="row">
-                <div class="cell cmd"><b>交互元素</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">按钮文字</div>
-                <div class="cell">0.65</div>
-                <div class="cell">14px</div>
-                <div class="cell">CTA按钮</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">导航链接</div>
-                <div class="cell">0.65</div>
-                <div class="cell">14px</div>
-                <div class="cell">主导航</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">表单标签</div>
-                <div class="cell">0.65</div>
-                <div class="cell">14px</div>
-                <div class="cell">label文字</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">表单输入</div>
-                <div class="cell">0.65</div>
-                <div class="cell">14px</div>
-                <div class="cell">input/textarea</div>
-              </div>
-
-              <div class="row">
-                <div class="cell cmd"><b>特殊元素</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">价格（大）</div>
-                <div class="cell">0.55</div>
-                <div class="cell">24px</div>
-                <div class="cell">突出显示的价格</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">价格（小）</div>
-                <div class="cell">0.65</div>
-                <div class="cell">14px</div>
-                <div class="cell">常规价格</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">徽章/标签</div>
-                <div class="cell">0.7</div>
-                <div class="cell">12px</div>
-                <div class="cell">badge/tag</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">面包屑</div>
-                <div class="cell">0.7</div>
-                <div class="cell">12px</div>
-                <div class="cell">breadcrumb</div>
-              </div>
-            </div>
-
-            <h3 class="doc-subhead">移动端（750 设计稿 / min-first）</h3>
-            <div class="table table--four">
-              <div class="row">
-                <div class="cell cmd">元素类型</div>
-                <div class="cell">系数</div>
-                <div class="cell">绝对兜底值</div>
-                <div class="cell">说明</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd"><b>标题类</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H1</div>
-                <div class="cell">0.5-0.55</div>
-                <div class="cell">24px</div>
-                <div class="cell">移动端主标题</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H2</div>
-                <div class="cell">0.55</div>
-                <div class="cell">20px</div>
-                <div class="cell">次级标题</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H3</div>
-                <div class="cell">0.55</div>
-                <div class="cell">18px</div>
-                <div class="cell">三级标题</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H4</div>
-                <div class="cell">0.6</div>
-                <div class="cell">16px</div>
-                <div class="cell">四级标题</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H5/H6</div>
-                <div class="cell">0.6</div>
-                <div class="cell">14px</div>
-                <div class="cell">小标题</div>
-              </div>
-
-              <div class="row">
-                <div class="cell cmd"><b>正文类</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">Body/段落</div>
-                <div class="cell">0.6</div>
-                <div class="cell">14px</div>
-                <div class="cell">移动端可读性优先</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">小字/辅助文字</div>
-                <div class="cell">0.65</div>
-                <div class="cell">12px</div>
-                <div class="cell">最小可读尺寸</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">引用文字</div>
-                <div class="cell">0.55</div>
-                <div class="cell">14px</div>
-                <div class="cell">blockquote</div>
-              </div>
-
-              <div class="row">
-                <div class="cell cmd"><b>交互元素</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">按钮文字</div>
-                <div class="cell">0.6</div>
-                <div class="cell">14px</div>
-                <div class="cell">确保可点击性</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">导航链接</div>
-                <div class="cell">0.6</div>
-                <div class="cell">14px</div>
-                <div class="cell">移动导航</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">表单标签</div>
-                <div class="cell">0.6</div>
-                <div class="cell">14px</div>
-                <div class="cell">label文字</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">表单输入</div>
-                <div class="cell">0.6</div>
-                <div class="cell">16px</div>
-                <div class="cell">iOS最佳实践（避免自动缩放）</div>
-              </div>
-
-              <div class="row">
-                <div class="cell cmd"><b>特殊元素</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">价格（大）</div>
+                <div class="cell cmd">coefficients.dense</div>
                 <div class="cell">0.5</div>
-                <div class="cell">22px</div>
-                <div class="cell">突出价格</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">价格（小）</div>
-                <div class="cell">0.6</div>
-                <div class="cell">14px</div>
-                <div class="cell">常规价格</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">徽章/标签</div>
-                <div class="cell">0.65</div>
-                <div class="cell">11px</div>
-                <div class="cell">badge/tag</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">面包屑</div>
-                <div class="cell">0.65</div>
-                <div class="cell">11px</div>
-                <div class="cell">breadcrumb</div>
+                <div class="cell">1.5</div>
+                <div class="cell">产品卡、tag、徽章等有限空间内容</div>
               </div>
             </div>
 
-            <h3 class="doc-subhead">移动端（590 设计稿 / dual-bound）</h3>
-            <p class="muted">完整配置表（590px 设计稿）</p>
-            <div class="table table--six">
-              <div class="row">
-                <div class="cell cmd">元素类型</div>
-                <div class="cell">设计稿值</div>
-                <div class="cell">最小值系数</div>
-                <div class="cell">绝对最小值</div>
-                <div class="cell">最大值系数</div>
-                <div class="cell">绝对最大值</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd"><b>标题类</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H1</div>
-                <div class="cell">36px</div>
-                <div class="cell">0.55</div>
-                <div class="cell">22px</div>
-                <div class="cell">1.4</div>
-                <div class="cell">52px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H2</div>
-                <div class="cell">32px</div>
-                <div class="cell">0.6</div>
-                <div class="cell">20px</div>
-                <div class="cell">1.4</div>
-                <div class="cell">48px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H3</div>
-                <div class="cell">28px</div>
-                <div class="cell">0.6</div>
-                <div class="cell">18px</div>
-                <div class="cell">1.4</div>
-                <div class="cell">40px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H4</div>
-                <div class="cell">24px</div>
-                <div class="cell">0.6</div>
-                <div class="cell">16px</div>
-                <div class="cell">1.3</div>
-                <div class="cell">32px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd"><b>正文类</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">Body</div>
-                <div class="cell">16px</div>
-                <div class="cell">0.65</div>
-                <div class="cell">14px</div>
-                <div class="cell">1.25</div>
-                <div class="cell">20px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">小字</div>
-                <div class="cell">14px</div>
-                <div class="cell">0.65</div>
-                <div class="cell">12px</div>
-                <div class="cell">1.25</div>
-                <div class="cell">18px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd"><b>交互</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">按钮</div>
-                <div class="cell">16px</div>
-                <div class="cell">0.65</div>
-                <div class="cell">14px</div>
-                <div class="cell">1.25</div>
-                <div class="cell">20px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">表单输入</div>
-                <div class="cell">16px</div>
-                <div class="cell">1.0</div>
-                <div class="cell">16px</div>
-                <div class="cell">1.25</div>
-                <div class="cell">20px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd"><b>特殊</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">价格（大）</div>
-                <div class="cell">32px</div>
-                <div class="cell">0.55</div>
-                <div class="cell">20px</div>
-                <div class="cell">1.4</div>
-                <div class="cell">48px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">徽章</div>
-                <div class="cell">12px</div>
-                <div class="cell">0.65</div>
-                <div class="cell">11px</div>
-                <div class="cell">1.3</div>
-                <div class="cell">16px</div>
-              </div>
+            <p>
+              例如 <span class="code">r.resp(24px, 16px)</span> 默认使用
+              <span class="code">readable</span>：PC 段按
+              <span class="code">16px * 0.625</span> 到
+              <span class="code">24px * 1.5</span> 计算边界；移动端则根据
+              <span class="code">design.mobileWidth</span> 选择对应的
+              <span class="code">min-first</span>、<span class="code">dual-bound</span>
+              或 <span class="code">max-first</span> 输出策略。
+            </p>
+
+            <h3 class="doc-subhead">三种移动端设计稿模式</h3>
+            <ul class="list">
+              <li>
+                <span class="code">mobileWidth &lt; 400</span>：<span class="code">max-first</span>，以设计值作为下限并计算最大值。
+              </li>
+              <li>
+                <span class="code">500 &lt;= mobileWidth &lt;= 600</span>：<span class="code">dual-bound</span>，同时计算最小值和最大值。
+              </li>
+              <li>
+                其他情况（典型为 750）：<span class="code">min-first</span>，计算最小值，设计值作为最大值。
+              </li>
+            </ul>
+
+            <h3 class="doc-subhead">profile 继承与覆盖</h3>
+            <p>
+              <span class="code">r.resp(pc, mobile)</span> 默认使用
+              <span class="code">readable</span>。父选择器可以通过
+              <span class="code">@include r.mode(dense)</span> 设置继承模式，嵌套子选择器中的
+              <span class="code">r.resp()</span> 会继承它；子选择器显式传入 profile 后覆盖父级模式。
+            </p>
+            <div class="codeblock">
+              <pre><code>.card {
+  @include r.mode(dense);
+  padding: r.resp(32px, 20px); // dense
+  .title { font-size: r.resp(24px, 16px); } // dense
+  .description { font-size: r.resp(20px, 14px, readable); } // 覆盖为 readable
+}</code></pre>
             </div>
 
-            <h3 class="doc-subhead">移动端（375 设计稿 / max-first）</h3>
-            <p class="muted">推荐配置表（375px 移动端设计稿）</p>
-            <div class="table table--six">
-              <div class="row">
-                <div class="cell cmd">元素类型</div>
-                <div class="cell">设计稿值</div>
-                <div class="cell">最小值（设计稿）</div>
-                <div class="cell">系数</div>
-                <div class="cell">绝对上限</div>
-                <div class="cell">最终最大值</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd"><b>标题类</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H1</div>
-                <div class="cell">32px</div>
-                <div class="cell">32px</div>
-                <div class="cell">1.4-1.5</div>
-                <div class="cell">48px</div>
-                <div class="cell">48px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H2</div>
-                <div class="cell">28px</div>
-                <div class="cell">28px</div>
-                <div class="cell">1.5</div>
-                <div class="cell">42px</div>
-                <div class="cell">42px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H3</div>
-                <div class="cell">24px</div>
-                <div class="cell">24px</div>
-                <div class="cell">1.5</div>
-                <div class="cell">36px</div>
-                <div class="cell">36px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">H4</div>
-                <div class="cell">20px</div>
-                <div class="cell">20px</div>
-                <div class="cell">1.5</div>
-                <div class="cell">30px</div>
-                <div class="cell">30px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd"><b>正文类</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">Body</div>
-                <div class="cell">14px</div>
-                <div class="cell">14px</div>
-                <div class="cell">1.3</div>
-                <div class="cell">18px</div>
-                <div class="cell">18px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">小字</div>
-                <div class="cell">12px</div>
-                <div class="cell">12px</div>
-                <div class="cell">1.3</div>
-                <div class="cell">16px</div>
-                <div class="cell">16px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd"><b>交互元素</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">按钮文字</div>
-                <div class="cell">16px</div>
-                <div class="cell">16px</div>
-                <div class="cell">1.25</div>
-                <div class="cell">20px</div>
-                <div class="cell">20px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">表单输入</div>
-                <div class="cell">16px</div>
-                <div class="cell">16px</div>
-                <div class="cell">1.25</div>
-                <div class="cell">20px</div>
-                <div class="cell">20px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd"><b>特殊元素</b></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-                <div class="cell"></div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">价格（大）</div>
-                <div class="cell">28px</div>
-                <div class="cell">28px</div>
-                <div class="cell">1.4</div>
-                <div class="cell">40px</div>
-                <div class="cell">40px</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">徽章/标签</div>
-                <div class="cell">11px</div>
-                <div class="cell">11px</div>
-                <div class="cell">1.3</div>
-                <div class="cell">14px</div>
-                <div class="cell">14px</div>
-              </div>
+            <h3 class="doc-subhead">自定义系数</h3>
+            <p>
+              第三个参数可传 profile 名称、数字最小系数，或包含
+              <span class="code">min/max</span> 的 Sass map。自定义值直接参与乘法计算，
+              不再与任何兜底值比较；第四个参数只覆盖移动端 profile。
+            </p>
+            <div class="codeblock">
+              <pre><code>font-size: r.resp(24px, 16px, (min: 0.7, max: 1.25));
+font-size: r.resp(24px, 16px, 0.7); // 自定义 min，max 继承当前模式
+font-size: r.resp(24px, 16px, readable, dense); // PC readable，Mobile dense</code></pre>
             </div>
+
+            <h3 class="doc-subhead">fixedCore</h3>
+            <p>
+              当版心在大屏固定时，可配置端点和版心宽度。例如
+              <span class="code">{ "breakpoint": 1500, "width": 1200 }</span> 会在
+              <span class="code">1500px</span> 及以上把
+              <span class="code">--px-to-vw</span> 固定为 <span class="code">1px</span>，
+              因此所有使用 <span class="code">r</span> 函数的尺寸回到设计稿值。当前
+              <span class="code">width</span> 用于记录和校验版心，不负责生成布局宽度。
+            </p>
           </section>
 
           <section id="commands" class="doc-section">
@@ -1191,16 +641,10 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
             <div class="table">
               <div class="row">
                 <div class="cell cmd">
-                  r.resp(pc, mobile, desktopType[, mobileType])
+                  r.resp(pc, mobile[, profile[, mobileProfile]])
                 </div>
                 <div class="cell">
-                  业务主函数（字体/需兜底）：PC 输出
-                  <span class="code">clamp</span>；Mobile 由扫描器生成
-                  <span class="code">resp_mb(...)</span> 覆盖；第 3/4
-                  参数分别控制 PC/Mobile type。 内置设计稿安全防护：<span
-                    class="code"
-                    >eff-min = math.min(min_px, pc)</span
-                  >， 保证 floor 过大时 min 不会超过设计稿值。
+                  业务主函数。PC 和 Mobile 都按 profile 计算边界；第 3 个参数控制 PC profile，第 4 个参数控制 Mobile profile。省略时默认使用 <span class="code">readable</span>，也可通过父级 <span class="code">r.mode(dense)</span> 继承模式。
                 </div>
               </div>
               <div class="row">
@@ -1242,39 +686,27 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
               </div>
 
               <div class="row">
-                <div class="cell cmd">
-                  r.min_px(value, type[, range, overrideCoef, overrideFloor])
-                </div>
+                <div class="cell cmd">r.min_px(value[, profile])</div>
                 <div class="cell">
-                  计算 clamp 最小值：命名 type 按
-                  <span class="code">max(design * coef, floor)</span>，数字 type
-                  直接按系数计算。
+                  返回 <span class="code">value * profile.min</span>。省略 profile 时使用当前继承模式，默认是 <span class="code">readable</span>。
                 </div>
               </div>
               <div class="row">
-                <div class="cell cmd">
-                  r.max_px(value, type[, range, overrideCoef, overrideCeiling])
-                </div>
+                <div class="cell cmd">r.max_px(value[, profile])</div>
                 <div class="cell">
-                  计算 clamp 最大值：优先按
-                  <span class="code">min(design * maxCoef, ceiling)</span
-                  >；未配置
-                  <span class="code">maxCoefficients</span> 时回退兼容旧规则
-                  <span class="code">min(design / coef, ceiling)</span>。
+                  返回 <span class="code">value * profile.max</span>。它只使用 profile 的最大系数，不读取任何绝对上限表。
                 </div>
               </div>
               <div class="row">
-                <div class="cell cmd">r.coef(type[, range])</div>
+                <div class="cell cmd">r.profile_min(profile)</div>
                 <div class="cell">
-                  读取 <span class="code">coefficients.mobile/desktop</span> 的
-                  type 系数。
+                  读取 profile 的最小系数；支持 <span class="code">readable</span>、<span class="code">dense</span>、数字或 Sass map。
                 </div>
               </div>
               <div class="row">
-                <div class="cell cmd">r._floor(type[, range])</div>
+                <div class="cell cmd">r.profile_max(profile)</div>
                 <div class="cell">
-                  读取 <span class="code">floors.mobile/desktop</span> 的 type
-                  绝对兜底值。
+                  读取 profile 的最大系数；支持 <span class="code">readable</span>、<span class="code">dense</span> 或包含 <span class="code">max</span> 的 Sass map。
                 </div>
               </div>
               <div class="row">
@@ -1296,18 +728,9 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
                 </div>
               </div>
               <div class="row">
-                <div class="cell cmd">r.resp_mb(mobile, type)</div>
+                <div class="cell cmd">r.resp_mb(mobile[, profile])</div>
                 <div class="cell">
-                  移动端策略入口：按
-                  <span class="code">responsive.mobileClampMode</span> 选择
-                  <span class="code">min-first</span> 或
-                  <span class="code">max-first</span> 或
-                  <span class="code">dual-bound</span>。
-                  内置设计稿安全防护：<span class="code"
-                    >eff-min = math.min(raw-min, mb)</span
-                  >、
-                  <span class="code">eff-max = math.max(raw-max, mb)</span>，
-                  保证 floor/ceiling 不会导致 clamp 区间非法。
+                  移动端策略入口。根据 <span class="code">responsive.mobileClampMode</span> 选择 <span class="code">min-first</span>、<span class="code">max-first</span> 或 <span class="code">dual-bound</span>，边界直接使用 profile 的 min/max 系数。
                 </div>
               </div>
               <div class="row">
@@ -1350,7 +773,7 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
             <div class="codeblock">
               <pre><code>/* 推荐写法 */
 .title {
-  font-size: r.resp(40px, 24px, h1, h2);
+  font-size: r.resp(40px, 24px, readable, dense);
 }
 
 .card {
@@ -1436,16 +859,6 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
                 </div>
               </div>
               <div class="row">
-                <div class="cell cmd">responsive.mobileProfilePreset</div>
-                <div class="cell">
-                  移动端预设系数表覆盖：
-                  <span class="code">off | auto | 375 | 590</span>。 默认推荐
-                  <span class="code">auto</span>（当
-                  <span class="code">design.mobileWidth</span> 为 375/590
-                  时自动套用对应表）。
-                </div>
-              </div>
-              <div class="row">
                 <div class="cell cmd">responsive.mobileClampMode</div>
                 <div class="cell">
                   移动端 clamp 策略：
@@ -1520,7 +933,18 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
               </div>
               <div class="row">
                 <div class="cell cmd">autofill.entries</div>
-                <div class="cell">入口列表（per-entry 模式批量生成所需）</div>
+                <div class="cell">
+                  入口列表（per-entry 模式批量生成所需）。使用对象格式时可通过
+                  <span class="code">varScope</span> 限定该入口的变量作用域：
+                  <div class="codeblock">
+                    <pre><code>"entries": [
+  {
+    "varScope": ".autumn-sale-2026",
+    "file": "src/styles/autumn-sale-2026.scss"
+  }
+]</code></pre>
+                  </div>
+                </div>
               </div>
 
               <div class="row">
@@ -1544,50 +968,17 @@ font-size: clamp(26px, calc(26 * var(--px-to-vw-mb)), 39px);</code></pre>
               </div>
 
               <div class="row">
-                <div class="cell cmd">coefficients.mobile</div>
-                <div class="cell">
-                  移动端系数表（key 是 type，value 是 number）
-                </div>
+                <div class="cell cmd">coefficients.readable</div>
+                <div class="cell">对象，包含 <span class="code">min</span> 和 <span class="code">max</span> 两个正数系数。默认值为 <span class="code">0.625 / 1.5</span>。</div>
               </div>
               <div class="row">
-                <div class="cell cmd">coefficients.desktop</div>
-                <div class="cell">
-                  PC 端系数表（key 是 type，value 是 number）
-                </div>
+                <div class="cell cmd">coefficients.dense</div>
+                <div class="cell">对象，包含 <span class="code">min</span> 和 <span class="code">max</span> 两个正数系数。默认值为 <span class="code">0.5 / 1.5</span>。</div>
               </div>
               <div class="row">
-                <div class="cell cmd">floors.mobile</div>
-                <div class="cell">
-                  移动端绝对兜底值表（key 是 type，value 是 px 字符串）
-                </div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">floors.desktop</div>
-                <div class="cell">
-                  PC 端绝对兜底值表（key 是 type，value 是 px 字符串）
-                </div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">maxCoefficients.mobile</div>
-                <div class="cell">
-                  移动端 max 系数表（max-first 时用于放大设计值）
-                </div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">maxCoefficients.desktop</div>
-                <div class="cell">PC 端 max 系数表（预留，默认可为空）</div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">ceilings.mobile</div>
-                <div class="cell">
-                  移动端绝对上限表（与 max 系数共同限制最大值）
-                </div>
-              </div>
-              <div class="row">
-                <div class="cell cmd">ceilings.desktop</div>
-                <div class="cell">PC 端绝对上限表（预留，默认可为空）</div>
-              </div>
-            </div>
+                <div class="cell cmd">fixedCore</div>
+                <div class="cell">可选对象 <span class="code">{ breakpoint, width }</span>。断点以上将版心核心单位固定为设计稿比例；未配置时为 <span class="code">null</span>。</div>
+              </div>            </div>
           </section>
 
           <section id="faq" class="doc-section">

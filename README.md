@@ -4,7 +4,7 @@ Tooling for a stable Shopify Theme Kit workflow:
 
 - Write SCSS in `src/styles/`
 - Compile to `assets/*.css` (safe mode; avoids overwriting unknown legacy CSS)
-- Auto-generate **per-entry** mobile overrides from `r.resp(pc, mobile, desktopType[, mobileType])`
+- Auto-generate **per-entry** mobile overrides from `r.resp(pc, mobile[, profile[, mobileProfile]])`
 - Use `r.vw(pc, mobile)` for spacing-first responsive values (mobile emits pure `vw`)
 - Support mobile clamp strategy switch (`responsive.mobileClampMode`):
   - `auto` (default):
@@ -12,8 +12,10 @@ Tooling for a stable Shopify Theme Kit workflow:
     - when `design.mobileWidth` is within `500~600`, mobile uses `dual-bound` (`clamp(min, fluid, max)`)
     - otherwise mobile uses `min-first` (`clamp(min, fluid, design)`)
   - `min-first`: keep classic `clamp(min, fluid, design)`
-  - `max-first`: force small-canvas growth with `maxCoefficients` + `ceilings`
+  - `max-first`: force small-canvas growth with the configured profile maximum coefficient
   - `dual-bound`: constrain both low-end and high-end growth with one clamp
+- Use `readable` and `dense` profiles; bounds are calculated directly as `design value * coefficient` without absolute floors or ceilings
+- Bootstrap newly created empty SCSS entries with responsive imports, the shared MiSans/Rany font faces, and the generated override include
 - Upload via Theme Kit `theme watch`
 
 ## Use it (recommended)

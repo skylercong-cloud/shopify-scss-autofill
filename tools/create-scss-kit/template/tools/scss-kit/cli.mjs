@@ -60,83 +60,136 @@ function cleanupBackup(backupPath) {
   }
 }
 
-const MOBILE_PROFILE_PRESETS = {
-  590: {
-    coefficientsMobile: {
-      h1: 0.55,
-      h2: 0.6,
-      h3: 0.6,
-      h4: 0.6,
-      body: 0.65,
-      small: 0.65,
-      'button-text': 0.65,
-      'form-input': 1.0,
-      'price-large': 0.55,
-      badge: 0.65,
+const DEFAULT_COEFFICIENTS = {
+  readable: { min: 0.625, max: 1.5 },
+  dense: { min: 0.5, max: 1.5 },
+}
+
+const PROFILE_NAMES = new Set(['readable', 'dense'])
+
+const hasOwn = (value, key) =>
+  Object.prototype.hasOwnProperty.call(value ?? {}, key)
+
+function isPlainObject(value) {
+  return value != null && typeof value === 'object' && !Array.isArray(value)
+}
+
+function assertPositiveNumber(value, label) {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+    throw new Error(
+      `Invalid ${label}: ${String(value)}. Expected a positive number`
+    )
+  }
+}
+
+function validateProfileConfig(profileName, rawProfile) {
+  if (rawProfile == null) return { ...DEFAULT_COEFFICIENTS[profileName] }
+  if (!isPlainObject(rawProfile)) {
+    throw new Error(`Invalid coefficients.${profileName}: expected an object`)
+  }
+
+  const profile = {
+    ...DEFAULT_COEFFICIENTS[profileName],
+    ...rawProfile,
+  }
+
+  assertPositiveNumber(profile.min, `coefficients.${profileName}.min`)
+  assertPositiveNumber(profile.max, `coefficients.${profileName}.max`)
+  if (profile.min > 1) {
+    throw new Error(
+      `Invalid coefficients.${profileName}.min: ${profile.min}. Expected a value <= 1`
+    )
+  }
+  if (profile.max < 1) {
+    throw new Error(
+      `Invalid coefficients.${profileName}.max: ${profile.max}. Expected a value >= 1`
+    )
+  }
+  if (profile.min > profile.max) {
+    throw new Error(
+      `Invalid coefficients.${profileName}: min (${profile.min}) must be <= max (${profile.max})`
+    )
+  }
+
+  return { min: profile.min, max: profile.max }
+}
+
+function validateAndNormalizeConfig(rawConfig) {
+  if (!isPlainObject(rawConfig)) {
+    throw new Error(`Invalid ${CONFIG_NAME}: expected a JSON object`)
+  }
+
+  const legacyPaths = new Set()
+  for (const key of ['maxCoefficients', 'floors', 'ceilings']) {
+    if (hasOwn(rawConfig, key)) legacyPaths.add(key)
+  }
+  if (hasOwn(rawConfig?.responsive, 'mobileProfilePreset')) {
+    legacyPaths.add('responsive.mobileProfilePreset')
+  }
+
+  const rawCoefficients = rawConfig.coefficients
+  if (rawCoefficients != null) {
+    if (!isPlainObject(rawCoefficients)) {
+      throw new Error('Invalid coefficients: expected an object')
+    }
+
+    for (const key of Object.keys(rawCoefficients)) {
+      if (!PROFILE_NAMES.has(key)) {
+        legacyPaths.add(`coefficients.${key}`)
+      }
+    }
+
+    for (const profileName of PROFILE_NAMES) {
+      const rawProfile = rawCoefficients[profileName]
+      if (!isPlainObject(rawProfile)) continue
+      for (const key of Object.keys(rawProfile)) {
+        if (!['min', 'max'].includes(key)) {
+          legacyPaths.add(`coefficients.${profileName}.${key}`)
+        }
+      }
+    }
+  }
+
+  if (legacyPaths.size) {
+    throw new Error(
+      `Legacy responsive coefficient config detected: ${[
+        ...legacyPaths,
+      ].join(', ')}. Remove the legacy fields and use coefficients.readable/dense with min/max.`
+    )
+  }
+
+  const mobileMax = rawConfig?.autofill?.mobileMax ?? DEFAULT_MOBILE_MAX
+  assertPositiveNumber(mobileMax, 'autofill.mobileMax')
+
+  let fixedCore = null
+  if (rawConfig.fixedCore != null) {
+    if (!isPlainObject(rawConfig.fixedCore)) {
+      throw new Error('Invalid fixedCore: expected null or an object')
+    }
+    assertPositiveNumber(rawConfig.fixedCore.breakpoint, 'fixedCore.breakpoint')
+    assertPositiveNumber(rawConfig.fixedCore.width, 'fixedCore.width')
+    if (rawConfig.fixedCore.breakpoint <= mobileMax) {
+      throw new Error(
+        `Invalid fixedCore.breakpoint: ${rawConfig.fixedCore.breakpoint}. Expected a value greater than autofill.mobileMax (${mobileMax})`
+      )
+    }
+    fixedCore = {
+      breakpoint: rawConfig.fixedCore.breakpoint,
+      width: rawConfig.fixedCore.width,
+    }
+  }
+
+  return {
+    ...rawConfig,
+    fixedCore,
+    coefficients: {
+      readable: validateProfileConfig(
+        'readable',
+        rawCoefficients?.readable
+      ),
+      dense: validateProfileConfig('dense', rawCoefficients?.dense),
     },
-    floorsMobile: {
-      h1: '22px',
-      h2: '20px',
-      h3: '18px',
-      h4: '16px',
-      body: '14px',
-      small: '12px',
-      'button-text': '14px',
-      'form-input': '16px',
-      'price-large': '20px',
-      badge: '11px',
-    },
-    maxCoefficientsMobile: {
-      h1: 1.4,
-      h2: 1.4,
-      h3: 1.4,
-      h4: 1.3,
-      body: 1.25,
-      small: 1.25,
-      'button-text': 1.25,
-      'form-input': 1.25,
-      'price-large': 1.4,
-      badge: 1.3,
-    },
-    ceilingsMobile: {
-      h1: '52px',
-      h2: '48px',
-      h3: '40px',
-      h4: '32px',
-      body: '20px',
-      small: '18px',
-      'button-text': '20px',
-      'form-input': '20px',
-      'price-large': '48px',
-      badge: '16px',
-    },
-  },
-  375: {
-    maxCoefficientsMobile: {
-      h1: 1.5,
-      h2: 1.5,
-      h3: 1.5,
-      h4: 1.5,
-      body: 1.3,
-      small: 1.3,
-      'button-text': 1.25,
-      'form-input': 1.25,
-      'price-large': 1.4,
-      badge: 1.3,
-    },
-    ceilingsMobile: {
-      h1: '48px',
-      h2: '42px',
-      h3: '36px',
-      h4: '30px',
-      body: '18px',
-      small: '16px',
-      'button-text': '20px',
-      'form-input': '20px',
-      'price-large': '40px',
-      badge: '14px',
-    },
-  },
+  }
 }
 
 function readJson(filePath) {
@@ -237,65 +290,6 @@ function getAutofill(cfg) {
     scanDirs,
     outputAbs: path.join(ROOT, output),
     outputRel: toPosix(output),
-  }
-}
-
-function resolveMobileProfilePreset(cfg) {
-  const presetRaw = cfg?.responsive?.mobileProfilePreset ?? 'off'
-  const preset = String(presetRaw)
-  if (!['off', 'auto', '375', '590'].includes(preset)) {
-    throw new Error(
-      `Invalid responsive.mobileProfilePreset: ${preset}. Expected one of: off|auto|375|590`
-    )
-  }
-
-  let profileKey = null
-  if (preset === 'auto') {
-    const w = Number(cfg?.design?.mobileWidth)
-    if (w === 375 || w === 590) profileKey = String(w)
-  } else if (preset !== 'off') {
-    profileKey = preset
-  }
-
-  if (!profileKey) return cfg
-
-  const profile = MOBILE_PROFILE_PRESETS[profileKey]
-  if (!profile) return cfg
-
-  return {
-    ...cfg,
-    coefficients: {
-      ...(cfg.coefficients ?? {}),
-      mobile: {
-        ...(cfg?.coefficients?.mobile ?? {}),
-        ...(profile.coefficientsMobile ?? {}),
-      },
-      desktop: { ...(cfg?.coefficients?.desktop ?? {}) },
-    },
-    floors: {
-      ...(cfg.floors ?? {}),
-      mobile: {
-        ...(cfg?.floors?.mobile ?? {}),
-        ...(profile.floorsMobile ?? {}),
-      },
-      desktop: { ...(cfg?.floors?.desktop ?? {}) },
-    },
-    maxCoefficients: {
-      ...(cfg.maxCoefficients ?? {}),
-      mobile: {
-        ...(cfg?.maxCoefficients?.mobile ?? {}),
-        ...(profile.maxCoefficientsMobile ?? {}),
-      },
-      desktop: { ...(cfg?.maxCoefficients?.desktop ?? {}) },
-    },
-    ceilings: {
-      ...(cfg.ceilings ?? {}),
-      mobile: {
-        ...(cfg?.ceilings?.mobile ?? {}),
-        ...(profile.ceilingsMobile ?? {}),
-      },
-      desktop: { ...(cfg?.ceilings?.desktop ?? {}) },
-    },
   }
 }
 
@@ -530,13 +524,16 @@ function generateReShorthandMap() {
 function replaceAutofillCalls(value, { ns, name, vwName }) {
   const respToken = `${ns}.${name}(`
   const replacedResp = replaceFunctionCalls(value, respToken, (args) => {
-    if (args.length < 3) return null
+    if (args.length < 2) return null
     const mobile = args[1]
-    const desktopType = args[2]
-    const mobileType = args.length >= 4 ? args[3] : desktopType
-    // type=0 means no clamp bounds (pure fluid). Use vw_mb instead of resp_mb(val, 0).
-    if (mobileType.trim() === '0') return `${ns}.vw_mb(${mobile})`
-    return `${ns}.resp_mb(${mobile}, ${mobileType})`
+    const desktopProfile = args[2]
+    const mobileProfile = args.length >= 4 ? args[3] : desktopProfile
+    const effectiveProfile = mobileProfile?.trim()
+
+    // An explicit zero keeps the existing pure-fluid escape hatch.
+    if (effectiveProfile === '0') return `${ns}.vw_mb(${mobile})`
+    if (!effectiveProfile) return `${ns}.resp_mb(${mobile})`
+    return `${ns}.resp_mb(${mobile}, ${effectiveProfile})`
   })
 
   const vwToken = `${ns}.${vwName}(`
@@ -776,7 +773,17 @@ function generateAutofillScss(cfg, collectedRules, varScope) {
   const pcVarsBlock =
     `  ${scope} {\n` +
     `    --px-to-vw: calc(100vw / ${desktopWidth});\n` +
+    `    --r-min-coef: ${cfg.coefficients.readable.min};\n` +
+    `    --r-max-coef: ${cfg.coefficients.readable.max};\n` +
     `  }\n`
+
+  const fixedCoreBlock = cfg.fixedCore
+    ? `\n  @media screen and (min-width: ${cfg.fixedCore.breakpoint}px) {\n` +
+      `    ${scope} {\n` +
+      `      --px-to-vw: 1px;\n` +
+      `    }\n` +
+      `  }\n`
+    : ''
 
   // MB vars block: 4-space indent inside @media, 6-space for property
   const mbVarsBlock =
@@ -789,6 +796,7 @@ function generateAutofillScss(cfg, collectedRules, varScope) {
       header +
       mixinHeader +
       pcVarsBlock +
+      fixedCoreBlock +
       `\n` +
       `  @media screen and (max-width: ${mobileMax}px) {\n` +
       mbVarsBlock +
@@ -817,6 +825,7 @@ function generateAutofillScss(cfg, collectedRules, varScope) {
     header +
     mixinHeader +
     pcVarsBlock +
+    fixedCoreBlock +
     `\n` +
     `  @media screen and (max-width: ${mobileMax}px) {\n` +
     mbVarsBlock +
@@ -912,42 +921,28 @@ function toScssMap(obj) {
 }
 
 function generateResponsiveScss(cfg) {
-  const mobileMap = toScssMap(cfg.coefficients.mobile)
-  const desktopMap = toScssMap(cfg.coefficients.desktop)
-  const mobileMaxCoefMap = toScssMap(cfg.maxCoefficients?.mobile ?? {})
-  const desktopMaxCoefMap = toScssMap(cfg.maxCoefficients?.desktop ?? {})
-  const mobileFloorMap = toScssMap(cfg.floors?.mobile ?? {})
-  const desktopFloorMap = toScssMap(cfg.floors?.desktop ?? {})
-  const mobileCeilingMap = toScssMap(cfg.ceilings?.mobile ?? {})
-  const desktopCeilingMap = toScssMap(cfg.ceilings?.desktop ?? {})
+  const readableMap = toScssMap(cfg.coefficients.readable)
+  const denseMap = toScssMap(cfg.coefficients.dense)
   const responsive = getResponsive(cfg)
 
   return `@use "sass:map";
 @use "sass:math";
 @use "sass:meta";
+@use "sass:string";
 
 // Generated by scss-kit from ${CONFIG_NAME}
-// Edit ${CONFIG_NAME} to change design sizes / coefficient tables.
+// Edit ${CONFIG_NAME} to change design sizes and responsive profiles.
 
 // Design widths:
 // - desktop: ${cfg.design.desktopWidth}
 // - mobile: ${cfg.design.mobileWidth}
 
-$coef-mobile: ${mobileMap};
+$profile-readable: ${readableMap};
 
-$coef-desktop: ${desktopMap};
+$profile-dense: ${denseMap};
 
-$max-coef-mobile: ${mobileMaxCoefMap};
-
-$max-coef-desktop: ${desktopMaxCoefMap};
-
-$floor-mobile: ${mobileFloorMap};
-
-$floor-desktop: ${desktopFloorMap};
-
-$ceiling-mobile: ${mobileCeilingMap};
-
-$ceiling-desktop: ${desktopCeilingMap};
+$readable-min: #{map.get($profile-readable, min)};
+$readable-max: #{map.get($profile-readable, max)};
 
 $mobile-clamp-mode: ${responsive.resolvedMobileClampMode};
 
@@ -968,144 +963,142 @@ $mobile-clamp-mode: ${responsive.resolvedMobileClampMode};
   @return math.div($value, 1px);
 }
 
-@function coef($type, $range: mobile) {
-  $table: if($range == desktop, $coef-desktop, $coef-mobile);
-  @if map.has-key($table, $type) {
-    @return map.get($table, $type);
-  }
-  @error "Unknown coef type: #{$type}";
+@function _inherited-min() {
+  @return string.unquote("var(--r-min-coef, #{$readable-min})");
 }
 
-@function max_coef($type, $range: mobile) {
-  $table: if($range == desktop, $max-coef-desktop, $max-coef-mobile);
-  @if map.has-key($table, $type) {
-    @return map.get($table, $type);
-  }
-  @return null;
+@function _inherited-max() {
+  @return string.unquote("var(--r-max-coef, #{$readable-max})");
 }
 
-@function _floor($type, $range: mobile) {
-  $table: if($range == desktop, $floor-desktop, $floor-mobile);
-  @if map.has-key($table, $type) {
-    @return map.get($table, $type);
+@function _validate-custom-min($value) {
+  @if meta.type-of($value) != number or not math.is-unitless($value) {
+    @error "Responsive minimum coefficient must be a unitless number";
   }
-  @return null;
+  @if $value <= 0 or $value > 1 {
+    @error "Responsive minimum coefficient must be greater than 0 and <= 1";
+  }
+  @return $value;
 }
 
-@function _ceiling($type, $range: mobile) {
-  $table: if($range == desktop, $ceiling-desktop, $ceiling-mobile);
-  @if map.has-key($table, $type) {
-    @return map.get($table, $type);
+@function _validate-custom-max($value) {
+  @if meta.type-of($value) != number or not math.is-unitless($value) {
+    @error "Responsive maximum coefficient must be a unitless number";
   }
-  @return null;
+  @if $value < 1 {
+    @error "Responsive maximum coefficient must be >= 1";
+  }
+  @return $value;
 }
 
-// 根据设计稿 px + 系数推导 clamp() 最小值：max(design * coef, floor)。
-// $type 可传命名类型（字符串）或直接传数字系数（跳过系数表查询，不使用 floor）。
-@function min_px($value, $type, $range: mobile, $override-coef: null, $override-floor: null) {
+@function _profile-map($profile) {
+  @if $profile == readable {
+    @return $profile-readable;
+  }
+  @if $profile == dense {
+    @return $profile-dense;
+  }
+  @error "Unknown responsive profile: #{$profile}. Use readable, dense, a positive minimum coefficient, or a map with min/max";
+}
+
+@function _resolve-profile($profile: null) {
+  $default-min: _inherited-min();
+  $default-max: _inherited-max();
+
+  @if $profile == null {
+    @return (min: $default-min, max: $default-max);
+  }
+
+  @if meta.type-of($profile) == string {
+    @return _profile-map($profile);
+  }
+
+  @if meta.type-of($profile) == number {
+    @return (
+      min: _validate-custom-min($profile),
+      max: $default-max,
+    );
+  }
+
+  @if meta.type-of($profile) == map {
+    $min: $default-min;
+    $max: $default-max;
+    @if map.has-key($profile, min) {
+      $min: _validate-custom-min(map.get($profile, min));
+    }
+    @if map.has-key($profile, max) {
+      $max: _validate-custom-max(map.get($profile, max));
+    }
+    @if meta.type-of($min) == number and meta.type-of($max) == number and $min > $max {
+      @error "Responsive profile min must be <= max";
+    }
+    @return (min: $min, max: $max);
+  }
+
+  @error "Responsive profile must be readable, dense, a number, or a Sass map";
+}
+
+@function profile_min($profile: null) {
+  @return map.get(_resolve-profile($profile), min);
+}
+
+@function profile_max($profile: null) {
+  @return map.get(_resolve-profile($profile), max);
+}
+
+@function _scale-bound($value, $coefficient) {
   $v: _to-px($value);
-
-  // 直接传数字系数：跳过类型表，直接以系数计算
-  @if meta.type-of($type) == number {
-    $min: $v * $type;
-    @if $override-floor != null {
-      @return math.max($min, _to-px($override-floor));
-    }
-    @return $min;
+  @if meta.type-of($coefficient) == number {
+    @return $v * $coefficient;
   }
-
-  $c: if($override-coef == null, coef($type, $range), $override-coef);
-  $min: $v * $c;
-
-  $f: if($override-floor != null, _to-px($override-floor), _floor($type, $range));
-  @if $f {
-    @return math.max($min, $f);
-  }
-  @return $min;
+  @return string.unquote("calc(#{$v} * #{$coefficient})");
 }
 
-// 根据设计稿 px + 系数推导 clamp() 最大值：
-// - 优先使用 max-coef（乘法放大）：min(design * maxCoef, ceiling)
-// - 若未配置 max-coef，则回退兼容旧规则：min(design / coef, ceiling)
-// $type 可传命名类型（字符串）或直接传数字系数。
-@function max_px($value, $type, $range: mobile, $override-coef: null, $override-ceiling: null) {
-  $v: _to-px($value);
-
-  @if meta.type-of($type) == number {
-    @if $type <= 0 {
-      @error "max_px() expects positive coefficient when type is number";
-    }
-    $max: $v * $type;
-    @if $override-ceiling != null {
-      @return math.min($max, _to-px($override-ceiling));
-    }
-    @return $max;
-  }
-
-  $mc: if($override-coef == null, max_coef($type, $range), $override-coef);
-  @if $mc != null {
-    @if $mc <= 0 {
-      @error "max_px() expects positive max coefficient for type: #{$type}";
-    }
-    $max: $v * $mc;
-    $ceil: if($override-ceiling != null, _to-px($override-ceiling), _ceiling($type, $range));
-    @if $ceil {
-      @return math.min($max, $ceil);
-    }
-    @return $max;
-  }
-
-  $c: coef($type, $range);
-  @if $c <= 0 {
-    @error "max_px() expects positive coefficient for fallback type: #{$type}";
-  }
-  $max: math.div($v, $c);
-
-  $ceil: if($override-ceiling != null, _to-px($override-ceiling), _ceiling($type, $range));
-  @if $ceil {
-    @return math.min($max, $ceil);
-  }
-  @return $max;
+@function min_px($value, $profile: null) {
+  @return _scale-bound($value, profile_min($profile));
 }
 
-// 生成桌面段 clamp：min + calc(pc * var(--px-to-vw)) + pc
-@function clamp_pc($pc, $min) {
-  $v: _to-px($pc);
+@function max_px($value, $profile: null) {
+  @return _scale-bound($value, profile_max($profile));
+}
+
+@mixin mode($profile) {
+  @if $profile != readable and $profile != dense {
+    @error "r.mode() expects readable or dense";
+  }
+  $values: _profile-map($profile);
+  --r-min-coef: #{map.get($values, min)};
+  --r-max-coef: #{map.get($values, max)};
+}
+
+// Generate the desktop clamp. Direct calls retain the design value as max;
+// resp() supplies the active profile max.
+@function clamp_pc($pc, $min, $max: null) {
+  $max-value: if($max == null, _to-px($pc), $max);
   $n: _to-num($pc);
-  @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw)), #{$v});
+  @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw)), #{$max-value});
 }
 
-// 生成移动段 clamp：min + calc(mobile * var(--px-to-vw-mb)) + max
+// Generate the mobile clamp: min + fluid + optional max.
 @function clamp_mb($mobile, $min, $max: null) {
-  $v: if($max == null, _to-px($mobile), _to-px($max));
+  $max-value: if($max == null, _to-px($mobile), $max);
   $n: _to-num($mobile);
-  @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw-mb)), #{$v});
+  @return clamp(#{$min}, calc(#{$n} * var(--px-to-vw-mb)), #{$max-value});
 }
 
-// 移动段响应式输出策略：
-// - min-first: 传统逻辑（按系数推导 min），以设计稿值为 min 上限兜底
-// - max-first: 小设计稿逻辑（设计值作为 min），以设计稿值为 max 下限兜底
-// - dual-bound: 中等设计稿（500-600）逻辑，双向边界均以设计稿值兜底
-@function resp_mb($mobile, $type) {
+// Mobile output strategy is selected from the configured design width.
+@function resp_mb($mobile, $profile: null) {
   $v: _to-px($mobile);
 
   @if $mobile-clamp-mode == max-first {
-    $raw-max: max_px($mobile, $type, mobile);
-    $eff-max: math.max($raw-max, $v);
-    @return clamp_mb($mobile, $mobile, $eff-max);
+    @return clamp_mb($mobile, $v, max_px($mobile, $profile));
   }
 
   @if $mobile-clamp-mode == dual-bound {
-    $raw-min: min_px($mobile, $type, mobile);
-    $raw-max: max_px($mobile, $type, mobile);
-    $eff-min: math.min($raw-min, $v);
-    $eff-max: math.max($raw-max, $v);
-    @return clamp_mb($mobile, $eff-min, $eff-max);
+    @return clamp_mb($mobile, min_px($mobile, $profile), max_px($mobile, $profile));
   }
 
-  $raw-min: min_px($mobile, $type, mobile);
-  $eff-min: math.min($raw-min, $v);
-  @return clamp_mb($mobile, $eff-min);
+  @return clamp_mb($mobile, min_px($mobile, $profile));
 }
 
 // 直接输出 PC 段 vw，并用设计稿 px 做上限兜底。
@@ -1137,18 +1130,13 @@ $mobile-clamp-mode: ${responsive.resolvedMobileClampMode};
   @return vw_pc($pc);
 }
 
-// resp():
-// - arg3: desktop type
-// - arg4 (optional): mobile type, defaults to desktop type
-// Keep both types in source so scss-kit autofill scanner can emit mobile overrides.
-@function resp($pc, $mobile, $type, $mobile-type: null) {
+// resp() defaults to the inherited readable profile when no explicit profile
+// is supplied. A parent r.mode() can replace those inherited CSS variables.
+@function resp($pc, $mobile, $desktop-profile: null, $mobile-profile: null) {
   @if meta.type-of($pc) != number {
     @error "resp() expects a number (px) for pc value";
   }
-  $v: _to-px($pc);
-  $raw-min: min_px($pc, $type, desktop);
-  $eff-min: math.min($raw-min, $v);
-  @return clamp_pc($pc, $eff-min);
+  @return clamp_pc($pc, min_px($pc, $desktop-profile), max_px($pc, $desktop-profile));
 }
 
 // re(): passthrough for non-dimension responsive values (color, display, background, etc.)
@@ -1374,7 +1362,7 @@ function doctor(cfg) {
 function main() {
   const cmd = process.argv[2] || 'help'
   const { config: rawConfig } = loadConfig()
-  const config = resolveMobileProfilePreset(rawConfig)
+  const config = validateAndNormalizeConfig(rawConfig)
 
   if (cmd === 'generate') {
     const scss = generateResponsiveScss(config)
@@ -1443,7 +1431,7 @@ function main() {
           action: 'responsive:template',
           ok: false,
           reason:
-            'deprecated: responsive map mode removed; use r.resp(pc, mobile, desktopType[, mobileType]) + responsive:generate',
+            'deprecated: responsive map mode removed; use r.resp(pc, mobile[, profile[, mobileProfile]]) + responsive:generate',
         },
         null,
         2
@@ -1659,7 +1647,12 @@ function main() {
         ? entryRel
         : path.join(ROOT, entryRel)
       if (!fs.existsSync(entryAbs)) {
-        results.push({ entry: entryRel, ok: false, reason: 'file not found' })
+        results.push({
+          entry: entryRel,
+          ok: true,
+          pending: true,
+          reason: 'file not found',
+        })
         continue
       }
 

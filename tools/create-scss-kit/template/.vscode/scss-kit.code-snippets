@@ -3,17 +3,17 @@
     "prefix": ["r.resp", "resp"],
     "scope": "scss",
     "body": [
-      "r.resp(${1:pc}px, ${2:mobile}px, ${3|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|}${4:, ${5|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|}})"
+      "r.resp(${1:pc}px, ${2:mobile}px)"
     ],
-    "description": "r.resp(pc, mobile, desktopType[, mobileType]) — clamp with minimum floor. PC: clamp(min, vw, px); Mobile: autofill override via resp_mb()."
+    "description": "r.resp(pc, mobile[, profile[, mobileProfile]]) — profile defaults to readable; use dense for compact content."
   },
-  "r.resp (3 args)": {
+  "r.resp (profile)": {
     "prefix": ["r.resp3", "resp3"],
     "scope": "scss",
     "body": [
-      "r.resp(${1:pc}px, ${2:mobile}px, ${3|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|})"
+      "r.resp(${1:pc}px, ${2:mobile}px, ${3|readable,dense|})"
     ],
-    "description": "r.resp(pc, mobile, type) — same type for both desktop and mobile."
+    "description": "r.resp(pc, mobile, profile) — explicit profile for both desktop and mobile."
   },
   "r.vw — responsive vw (spacing)": {
     "prefix": ["r.vw", "vw"],
@@ -67,9 +67,9 @@
     "prefix": ["r.resp_mb", "resp_mb"],
     "scope": "scss",
     "body": [
-      "r.resp_mb(${1:mobile}px, ${2|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|})"
+      "r.resp_mb(${1:mobile}px, ${2|readable,dense|})"
     ],
-    "description": "r.resp_mb(mobile, type) — Selects min-first/max-first/dual-bound based on mobileClampMode."
+    "description": "r.resp_mb(mobile[, profile]) — Selects min-first/max-first/dual-bound based on mobileClampMode."
   },
   "r.clamp_pc — desktop clamp formula": {
     "prefix": ["r.clamp_pc", "clamp_pc"],
@@ -91,17 +91,17 @@
     "prefix": ["r.min_px", "min_px"],
     "scope": "scss",
     "body": [
-      "r.min_px(${1:value}px, ${2|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|}${3:, ${4|mobile,desktop|}})"
+      "r.min_px(${1:value}px, ${2|readable,dense|})"
     ],
-    "description": "r.min_px(value, type[, range]) — Calculate clamp minimum: max(designPx * coef, floor)."
+    "description": "r.min_px(value[, profile]) — Calculate value * profile.min."
   },
   "r.max_px — clamp maximum calculator": {
     "prefix": ["r.max_px", "max_px"],
     "scope": "scss",
     "body": [
-      "r.max_px(${1:value}px, ${2|h1,h2,h3,h4,h5,h6,body,small,quote,button-text,nav-link,form-label,form-input,price-large,price-small,badge,breadcrumb,section-gap,card-gap,element-gap,icon|}${3:, ${4|mobile,desktop|}})"
+      "r.max_px(${1:value}px, ${2|readable,dense|})"
     ],
-    "description": "r.max_px(value, type[, range]) — Calculate clamp maximum: min(designPx * maxCoef, ceiling)."
+    "description": "r.max_px(value[, profile]) — Calculate value * profile.max."
   },
   "scss-kit entry boilerplate": {
     "prefix": ["scss-kit-entry", "entry-boilerplate"],

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on Keep a Changelog.
 
+## [0.7.0] - 2026-09-05
+
+- Replaced semantic responsive coefficient tables and absolute floors/ceilings with readable and dense min/max profiles.
+- Added inherited r.mode() profile selection, optional fixedCore, and pending missing entries for watcher startup.
+- Added the shared MiSans and Rany `@font-face` declarations to the boilerplate generated for newly created empty SCSS entry files.
+
 ## [0.6.4] - 2026-04-21
 
 ### Fixed

@@ -13,13 +13,23 @@
         "note": {"type": "string"}
       }
     },
+    "fixedCore": {
+      "oneOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "required": ["breakpoint", "width"],
+          "properties": {
+            "breakpoint": {"type": "number", "exclusiveMinimum": 0},
+            "width": {"type": "number", "exclusiveMinimum": 0}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
     "responsive": {
       "type": "object",
       "properties": {
-        "mobileProfilePreset": {
-          "type": "string",
-          "enum": ["off", "auto", "375", "590"]
-        },
         "mobileClampMode": {
           "type": "string",
           "enum": ["auto", "min-first", "max-first", "dual-bound"]
@@ -45,7 +55,23 @@
         "mobileMax": {"type": "integer", "minimum": 1},
         "scanDirs": {"type": "array", "items": {"type": "string"}},
         "output": {"type": "string"},
-        "entries": {"type": "array", "items": {"oneOf": [{"type": "string"}, {"type": "object", "required": ["file"], "properties": {"file": {"type": "string"}, "varScope": {"type": "string"}}}]}}
+        "entries": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {"type": "string"},
+              {
+                "type": "object",
+                "required": ["file"],
+                "properties": {
+                  "file": {"type": "string"},
+                  "varScope": {"type": "string"}
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        }
       }
     },
     "themeKit": {
@@ -59,32 +85,23 @@
     },
     "coefficients": {
       "type": "object",
-      "required": ["mobile", "desktop"],
+      "required": ["readable", "dense"],
       "properties": {
-        "mobile": {"type": "object", "additionalProperties": {"type": "number"}},
-        "desktop": {"type": "object", "additionalProperties": {"type": "number"}}
-      }
-    },
-    "maxCoefficients": {
+        "readable": {"$ref": "#/$defs/profile"},
+        "dense": {"$ref": "#/$defs/profile"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "profile": {
       "type": "object",
+      "required": ["min", "max"],
       "properties": {
-        "mobile": {"type": "object", "additionalProperties": {"type": "number"}},
-        "desktop": {"type": "object", "additionalProperties": {"type": "number"}}
-      }
-    },
-    "floors": {
-      "type": "object",
-      "properties": {
-        "mobile": {"type": "object", "additionalProperties": {"type": "string"}},
-        "desktop": {"type": "object", "additionalProperties": {"type": "string"}}
-      }
-    },
-    "ceilings": {
-      "type": "object",
-      "properties": {
-        "mobile": {"type": "object", "additionalProperties": {"type": "string"}},
-        "desktop": {"type": "object", "additionalProperties": {"type": "string"}}
-      }
+        "min": {"type": "number", "exclusiveMinimum": 0, "maximum": 1},
+        "max": {"type": "number", "minimum": 1}
+      },
+      "additionalProperties": false
     }
   }
 }

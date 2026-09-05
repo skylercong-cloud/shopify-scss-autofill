@@ -3,7 +3,8 @@
 This package scaffolds **scss-kit** into an existing folder (or a new folder) so you can get a stable workflow:
 
 - write SCSS → compile to CSS (safe mode)
-- auto-generate per-entry responsive overrides from `r.resp(pc, mobile, desktopType[, mobileType])`
+- auto-generate per-entry responsive overrides from `r.resp(pc, mobile[, profile[, mobileProfile]])`
+- bootstrap newly created empty SCSS entries with responsive imports, shared MiSans/Rany font faces, and the generated override include
 - upload via Shopify Theme Kit (`theme watch`)
 
 ## Usage (npm create)
@@ -35,3 +36,5 @@ Options:
 - `tools/scss-kit/*` (the CLI + watchers)
 - `scss-kit.config.json` (default config)
 - Runs `node tools/scss-kit/cli.mjs init` to patch scripts/devDependencies safely
+
+While `npm run dev:theme:auto` is running, creating an empty entry SCSS file under the configured source directory triggers the watcher boilerplate. Existing non-empty files are left unchanged.

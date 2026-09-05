@@ -2,6 +2,90 @@ import { spawnSync } from 'node:child_process'
 import fs from 'node:fs'
 import path from 'node:path'
 
+const DEFAULT_FONT_FACE_BLOCK = `@font-face {
+  font-family: "MiSans Bold";
+  src: url("https://cdn.shopify.com/s/files/1/0302/5276/1220/files/MiSans-Bold_36d8ea4e-3ca2-4f8c-85b3-21ba185fa45c.ttf?v=1777011186");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Rany Bold";
+  src: url("https://cdn.shopify.com/s/files/1/0302/5276/1220/files/Rany-Bold_4695da51-cc14-45d4-b372-571e9d7777fe.otf?v=1777011175");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Medium";
+  src: url("https://cdn.shopify.com/s/files/1/0302/5276/1220/files/MiSans-Medium.ttf?v=1777011197");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Latin Medium";
+  src: url("https://cdn.shopify.com/s/files/1/0302/5276/1220/files/MiSansLatin-Medium.ttf?v=1777011240");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Latin Bold";
+  src: url("https://cdn.shopify.com/s/files/1/0553/1320/3405/files/MiSansLatin-Bold.woff2?v=1784971778");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Demibold";
+  src: url("https://cdn.shopify.com/s/files/1/0302/5276/1220/files/MiSans-Demibold_83f9d1fe-2dbb-435c-80bc-fdf710ed634f.ttf?v=1777011208");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Latin Demibold";
+  src: url("https://cdn.shopify.com/s/files/1/0553/1320/3405/files/MiSansLatin-Demibold.ttf?v=1724393874");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Semibold";
+  src: url("https://cdn.shopify.com/s/files/1/0302/5276/1220/files/MiSans-Semibold.ttf?v=1777275585");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Latin Semibold";
+  src: url("https://cdn.shopify.com/s/files/1/0553/1320/3405/files/MiSansLatin-Semibold.ttf?v=1722323960");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Regular";
+  src: url("https://cdn.shopify.com/s/files/1/0553/1320/3405/files/MiSans-Regular.woff?v=1741060594");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Latin Regular";
+  src: url("https://cdn.shopify.com/s/files/1/0553/1320/3405/files/MiSansLatin-Regular.ttf?v=1722323938");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Light";
+  src: url("https://cdn.shopify.com/s/files/1/0553/1320/3405/files/MiSans-Light.ttf?v=1724823995");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Latin Normal";
+  src: url("https://cdn.shopify.com/s/files/1/0553/1320/3405/files/MiSansLatin-Normal.woff2?v=1769479583");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "MiSans Latin Light";
+  src: url("https://cdn.shopify.com/s/files/1/0553/1320/3405/files/MiSansLatin-Light.woff2?v=1784971879");
+  font-display: swap;
+}`
+
 function run(cmd, args) {
   const result = spawnSync(cmd, args, {
     stdio: 'inherit',
@@ -10,48 +94,91 @@ function run(cmd, args) {
   return typeof result.status === 'number' ? result.status : 1
 }
 
-const changed = process.argv[2]
-if (!changed) {
-  console.error(
-    'Usage: node tools/scss-kit/responsive-watch.mjs <changed-scss-path>'
-  )
-  process.exit(1)
+function toPosix(value) {
+  return String(value).replaceAll('\\', '/')
 }
 
-const normalized = String(changed).replaceAll('\\\\', '/').replaceAll('\\', '/')
-const base = path.posix.basename(normalized)
-
-// Ignore generated files to avoid loops
-if (
-  base.startsWith('_responsive-autofill') &&
-  base.endsWith('.generated.scss')
-) {
-  process.exit(0)
+function normalizeRelativePath(value) {
+  const absolute = path.resolve(process.cwd(), String(value))
+  return toPosix(path.relative(process.cwd(), absolute))
 }
 
-if (!normalized.endsWith('.scss')) process.exit(0)
-
-const isPartial = base.startsWith('_')
+function readConfig() {
+  const configPath = path.join(process.cwd(), 'scss-kit.config.json')
+  if (!fs.existsSync(configPath)) return null
+  try {
+    return {
+      path: configPath,
+      config: JSON.parse(fs.readFileSync(configPath, 'utf8')),
+    }
+  } catch {
+    return null
+  }
+}
 
 function getEntryBaseName(scssPath) {
-  return path.posix.basename(scssPath).replace(/\.scss$/i, '')
+  return path.posix.basename(toPosix(scssPath)).replace(/\.scss$/i, '')
 }
 
-function ensureEntryBoilerplate(entryRelPath) {
+function getScssSrcDir(config) {
+  return config?.paths?.scssSrcDir ?? 'src/styles'
+}
+
+function getGeneratedPath(entryRelPath, config) {
+  const outputDir = path.resolve(process.cwd(), getScssSrcDir(config))
+  return path.join(
+    outputDir,
+    `_responsive-autofill.${getEntryBaseName(entryRelPath)}.generated.scss`
+  )
+}
+
+function getRelativeUsePath(fromFile, targetFile) {
+  const relative = toPosix(path.relative(path.dirname(fromFile), targetFile))
+  return relative.startsWith('.') ? relative : `./${relative}`
+}
+
+function ensureGeneratedPlaceholder(entryRelPath, config) {
+  const generatedAbs = getGeneratedPath(entryRelPath, config)
+  if (fs.existsSync(generatedAbs)) return { ok: true, changed: false }
+
+  fs.mkdirSync(path.dirname(generatedAbs), { recursive: true })
+  fs.writeFileSync(
+    generatedAbs,
+    `@use "./responsive" as r;\n\n// Generated by scss-kit placeholder\n@mixin responsive_autofill_overrides() {}\n`,
+    'utf8'
+  )
+  return { ok: true, changed: true, path: generatedAbs }
+}
+
+function inspectEntry(entryRelPath) {
   const abs = path.isAbsolute(entryRelPath)
     ? entryRelPath
     : path.join(process.cwd(), entryRelPath)
   if (!fs.existsSync(abs)) return { ok: false, changed: false, wasEmpty: false }
+  const raw = fs.readFileSync(abs, 'utf8')
+  return { ok: true, changed: false, wasEmpty: raw.trim().length === 0, abs }
+}
 
+function ensureEntryBoilerplate(entryRelPath, config) {
+  const state = inspectEntry(entryRelPath)
+  if (!state.ok) return state
+  if (!state.wasEmpty) return state
+
+  const abs = state.abs
   const raw = fs.readFileSync(abs, 'utf8')
   const eol = raw.includes('\r\n') ? '\r\n' : '\n'
-  const entryBase = getEntryBaseName(entryRelPath)
-
-  const wasEmpty = raw.trim().length === 0
-  if (!wasEmpty) return { ok: true, changed: false, wasEmpty }
-
-  const responsiveUse = '@use "./responsive" as r;'
-  const generatedUse = `@use "./_responsive-autofill.${entryBase}.generated" as auto;`
+  const responsivePath = path.join(
+    process.cwd(),
+    getScssSrcDir(config),
+    'responsive'
+  )
+  const generatedPath = getGeneratedPath(entryRelPath, config)
+  const responsiveUse = `@use "${getRelativeUsePath(abs, responsivePath)}" as r;`
+  const generatedUse = `@use "${getRelativeUsePath(abs, generatedPath).replace(
+    /\.scss$/i,
+    ''
+  )}" as auto;`
+  const fontFaceBlock = DEFAULT_FONT_FACE_BLOCK.replaceAll('\n', eol)
   const includeLine = '@include auto.responsive_autofill_overrides();'
   const includeComment =
     '// 注意：请保持本行在文件末尾，避免自动生成的移动端代码覆盖顺序异常。'
@@ -62,54 +189,93 @@ function ensureEntryBoilerplate(entryRelPath) {
     generatedUse +
     eol +
     eol +
+    fontFaceBlock +
+    eol +
+    eol +
     includeComment +
     eol +
     includeLine +
     eol
 
   fs.writeFileSync(abs, next, 'utf8')
-  return { ok: true, changed: true, wasEmpty }
+  return { ok: true, changed: true, wasEmpty: true, abs }
 }
 
-function maybeAddEntryToConfig(entryRelPath) {
-  // Only manage entries for non-partials inside src/styles
-  if (!entryRelPath.startsWith('src/styles/'))
-    return { ok: false, changed: false }
+function getConfiguredEntryFile(entry) {
+  if (typeof entry === 'string') return entry
+  if (entry && typeof entry === 'object' && typeof entry.file === 'string') {
+    return entry.file
+  }
+  return null
+}
 
-  const cfgAbs = path.join(process.cwd(), 'scss-kit.config.json')
-  if (!fs.existsSync(cfgAbs)) return { ok: false, changed: false }
+function maybeAddEntryToConfig(entryRelPath, loaded = readConfig()) {
+  if (!loaded) return { ok: false, changed: false }
 
-  const raw = fs.readFileSync(cfgAbs, 'utf8')
-  let cfg
-  try {
-    cfg = JSON.parse(raw)
-  } catch {
+  const { config: cfg, path: cfgAbs } = loaded
+  const normalized = normalizeRelativePath(entryRelPath)
+  const scssSrcDir = normalizeRelativePath(getScssSrcDir(cfg)).replace(/\/$/, '')
+  if (normalized !== scssSrcDir && !normalized.startsWith(`${scssSrcDir}/`)) {
     return { ok: false, changed: false }
   }
 
   const entries = cfg?.autofill?.entries
   if (!Array.isArray(entries)) return { ok: false, changed: false }
 
-  if (entries.includes(entryRelPath)) return { ok: true, changed: false }
+  const exists = entries.some((entry) => {
+    const file = getConfiguredEntryFile(entry)
+    return file && normalizeRelativePath(file) === normalized
+  })
+  if (exists) return { ok: true, changed: false }
 
-  entries.push(entryRelPath)
+  entries.push(normalized)
   cfg.autofill.entries = entries
   fs.writeFileSync(cfgAbs, JSON.stringify(cfg, null, 2) + '\n', 'utf8')
   return { ok: true, changed: true }
 }
 
+const changed = process.argv[2]
+if (!changed) {
+  console.error(
+    'Usage: node tools/scss-kit/responsive-watch.mjs <changed-scss-path>'
+  )
+  process.exit(1)
+}
+
+const normalized = normalizeRelativePath(changed)
+const base = path.posix.basename(normalized)
+
+// Ignore generated files to avoid loops.
+if (
+  base.startsWith('_responsive-autofill') &&
+  base.endsWith('.generated.scss')
+) {
+  process.exit(0)
+}
+
+if (!normalized.endsWith('.scss')) process.exit(0)
+
+const isPartial = base.startsWith('_')
+const loaded = readConfig()
+const config = loaded?.config ?? {}
+
 // When editing a partial, regenerate all configured entries.
-// When editing an entry, regenerate only that entry's per-entry output.
 const cli = path.join('tools', 'scss-kit', 'cli.mjs')
 if (isPartial) {
   process.exit(run('node', [cli, 'responsive:generate:entries']))
 }
 
-// For entry files: ensure boilerplate + ensure it's part of entries list,
-// then generate its per-entry autofill file.
-const boot = ensureEntryBoilerplate(normalized)
-if (boot.wasEmpty) {
-  maybeAddEntryToConfig(normalized)
-}
+const state = inspectEntry(normalized)
+if (!state.ok) process.exit(0)
+
+// Register unconfigured empty entries before reading the normalized config.
+if (state.wasEmpty) maybeAddEntryToConfig(normalized, loaded)
+const refreshed = readConfig()
+const refreshedConfig = refreshed?.config ?? config
+
+// The placeholder must exist before boilerplate imports it, otherwise the
+// Sass watcher can compile the new entry in between those two filesystem writes.
+ensureGeneratedPlaceholder(normalized, refreshedConfig)
+ensureEntryBoilerplate(normalized, refreshedConfig)
 
 process.exit(run('node', [cli, 'responsive:generate', normalized]))

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.7.0] - 2026-09-05
+
+- Added readable/dense responsive profiles, inherited `r.mode()` selection, `fixedCore`, and non-blocking pending entries.
+- Added the shared MiSans and Rany `@font-face` declarations to the boilerplate generated for newly created empty SCSS entry files.
+
 ## [0.6.4] - 2026-04-21
 
 ### Fixed
