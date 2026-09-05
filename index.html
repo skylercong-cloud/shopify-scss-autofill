@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>shopify-scss-autofill</title>
+    <meta
+      name="description"
+      content="面向 Shopify Theme Kit 的 SCSS 工具链：安全编译 CSS，自动生成 per-entry 移动端覆盖，并联动 Theme Kit 上传。"
+    />
+    <link
+      rel="icon"
+      href="https://ctf-1314160455.cos.ap-nanjing.myqcloud.com/favicon.ico"
+      type="image/x-icon"
+    />
+    <script type="module" crossorigin src="/shopify-scss-autofill/assets/home-WB6DJesS.js"></script>
+    <link rel="modulepreload" crossorigin href="/shopify-scss-autofill/assets/code-copy-xRkM-xxI.js">
+    <link rel="stylesheet" crossorigin href="/shopify-scss-autofill/assets/code-copy-du5RSVCz.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="./">
+          <img
+            class="brand__logo"
+            src="https://ctf-1314160455.cos.ap-nanjing.myqcloud.com/logo.svg"
+            alt=""
+            aria-hidden="true"
+          />
+          <span>shopify-scss-autofill</span>
+        </a>
+        <nav class="nav" aria-label="主导航">
+          <a class="nav__link is-active" href="./">首页</a>
+          <a class="nav__link" href="./docs/">文档</a>
+          <a
+            class="nav__link"
+            href="https://github.com/skylercong-cloud/shopify-scss-autofill"
+            target="_blank"
+            rel="noreferrer"
+            >GitHub</a
+          >
+          <a
+            class="nav__link"
+            href="https://www.npmjs.com/package/create-shopify-scss-autofill"
+            target="_blank"
+            rel="noreferrer"
+            >npm</a
+          >
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero hero--home">
+        <div class="container hero__inner">
+          <h1 class="hero__title">
+            面向 Shopify Theme Kit 的
+            <span class="text-gradient">SCSS 工具链</span>
+          </h1>
+          <p class="hero__subtitle">
+            易上手、稳定、可扩展：为日常页面开发提供更顺滑的“写样式 → 编译 →
+            上传”体验。
+          </p>
+          <div class="hero__cta" aria-label="主要操作">
+            <a class="btn btn--primary" href="./docs/#quick-start"
+              >Quick Start</a
+            >
+            <a
+              class="btn"
+              href="https://github.com/skylercong-cloud/shopify-scss-autofill"
+              target="_blank"
+              rel="noreferrer"
+              >GitHub</a
+            >
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--features" aria-label="核心能力">
+        <div class="container">
+          <div class="feature-grid">
+            <article class="card feature-card">
+              <span class="card__meta">01</span>
+              <h3>开箱即用</h3>
+              <p>一条初始化命令接入工具链、默认配置、脚本和示例结构。</p>
+            </article>
+            <article class="card feature-card">
+              <span class="card__meta">02</span>
+              <h3>一键启动</h3>
+              <p>联动响应式生成、Sass 编译、安全同步和 Theme Kit watch。</p>
+            </article>
+            <article class="card feature-card">
+              <span class="card__meta">03</span>
+              <h3>per-entry 覆盖</h3>
+              <p>为每个入口生成独立移动端覆盖文件，降低页面之间互相污染的风险。</p>
+            </article>
+            <article class="card feature-card">
+              <span class="card__meta">04</span>
+              <h3>安全写入策略</h3>
+              <p>默认通过 marker 与 .new 兜底保护旧 CSS，减少误覆盖历史文件。</p>
+            </article>
+            <article class="card feature-card">
+              <span class="card__meta">05</span>
+              <h3>SCSS 组织体验</h3>
+              <p>入口、partial、变量与函数可以按组件和页面拆分维护。</p>
+            </article>
+            <article class="card feature-card">
+              <span class="card__meta">06</span>
+              <h3>多设计稿适配</h3>
+              <p>支持 750、590、375 等移动端设计稿对应的 clamp 策略。</p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section section--showcase" aria-labelledby="demo-title">
+        <div class="container">
+          <div class="section__head section__head--center section__head--simple">
+            <h2 id="demo-title">DEMO演示</h2>
+          </div>
+
+          <div class="demo-shell">
+            <div class="demo-shell__bar" aria-hidden="true">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <video
+              class="demo-video"
+              controls
+              preload="metadata"
+              playsinline
+            >
+              <source
+                src="./videos/shopify-scss-autofill-demo.mp4"
+                type="video/mp4"
+              />
+              你的浏览器不支持视频播放。
+            </video>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <span>MIT License</span>
+        <span class="footer__sep">/</span>
+        <a
+          href="https://github.com/skylercong-cloud/shopify-scss-autofill"
+          target="_blank"
+          rel="noreferrer"
+          >GitHub</a
+        >
+        <span class="footer__sep">/</span>
+        <a href="./docs/">Docs</a>
+      </div>
+    </footer>
+
+  </body>
+</html>
